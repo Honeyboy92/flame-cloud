@@ -16,53 +16,36 @@ Professional Minecraft Hosting Platform by Honey_boy1
 ## 🛠️ Tech Stack
 
 - **Frontend:** React.js (Hooks, Context API)
-- **Backend:** Node.js + Express (with local API shim)
-- **Database:** Supabase (PostgreSQL) / local SQLite proxy
-- **Auth:** JWT (Local) / Supabase Auth
+- **Backend:** Node.js + Express
+- **Database:** Local SQLite (daimond.db)
+- **Auth:** JWT (Local)
 
 ## 🚀 Deployment Guide
 
-### 1. Database Setup (Supabase)
+### 1. Backend Setup
 
-1. Create a new project at [supabase.com](https://supabase.com).
-2. Go to the **SQL Editor** in your Supabase dashboard.
-3. Copy the contents of [`supabase_setup.sql`](./supabase_setup.sql) and run it.
-4. Go to **Project Settings → API** to get your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+1. Deploy the `server/` folder to a Node.js hosting provider (Railway, Render, or VPS).
+2. Set the following environment variables:
+   - `JWT_SECRET`: Secret key for JWT auth
+   - `ADMIN_EMAIL`: Default admin email
+   - `ADMIN_PASSWORD`: Default admin password
+3. The server will automatically initialize the `daimond.db` SQLite database.
 
 ### 2. Frontend Deployment (Vercel)
 
 1. Push your code to GitHub.
 2. Link your repo to [Vercel](https://vercel.com).
 3. In Vercel, connect your domain: **flamecloud.site**.
-4. Set the following environment variables in Vercel:
-   - `REACT_APP_SUPABASE_URL`: Your Supabase URL
-   - `REACT_APP_SUPABASE_ANON_KEY`: Your Supabase Anon Key
-5. Deployment will be automatic!
-
-> [!IMPORTANT]
-> In your Supabase Dashboard (Authentication → URL Configuration):
-> 1. Set **Site URL** to `https://flamecloud.site`
-> 2. Add the following to **Redirect URLs**:
->    - `https://flamecloud.site/**` (Wildcard for all pages)
->    - `https://flamecloud.site/login`
->    - `https://flamecloud.site/signup`
->    - `https://flamecloud.site/dashboard`
-
-### 3. Backend Deployment (Optional)
-
-If you wish to use the advanced Node.js features (like the API shim), deploy the `server/` folder to **Railway** or **Render**:
-1. Set `DATABASE_URL` (if using Postgres).
-2. Set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
+4. Deployment will be automatic!
 
 ## 🛠️ Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `REACT_APP_SUPABASE_URL` | Your Supabase Project URL |
-| `REACT_APP_SUPABASE_ANON_KEY` | Your Supabase Public API Key |
 | `JWT_SECRET` | Secret key for local JWT auth |
 | `ADMIN_EMAIL` | Default admin email |
 | `ADMIN_PASSWORD` | Default admin password |
+| `PORT` | Server port (default 5000) |
 
 ## 👥 Authors & Team
 

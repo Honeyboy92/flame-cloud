@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, supabase } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const PaidPlans = () => {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ const PaidPlans = () => {
     // Fetch paid plans and location settings from server (SQLite-backed)
     const fetchPlans = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from('paid_plans')
           .select('*')
           .eq('is_active', true)
@@ -50,7 +51,7 @@ const PaidPlans = () => {
 
     const fetchLocationSettings = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await api
           .from('location_settings')
           .select('*')
           .order('sort_order', { ascending: true });
@@ -69,7 +70,7 @@ const PaidPlans = () => {
 
     const fetchSettings = async () => {
       try {
-        const { data } = await supabase
+        const { data } = await api
           .from('site_settings')
           .select('value')
           .eq('key', 'discord_members')
@@ -139,7 +140,7 @@ const PaidPlans = () => {
         // Submit order to server so admin panel (SQLite) can see it
         // Submit order as a ticket
         try {
-          const { error } = await supabase
+          const { error } = await api
             .from('tickets')
             .insert([{
               user_id: user.id,
@@ -575,19 +576,19 @@ const PaidPlans = () => {
                         {plan.name}
                       </h3>
                       <div className="spec">
-                        <span className="spec-label"><span className="spec-emoji ram-emoji">💾</span> RAM</span>
+                        <span className="spec-label"><span className="spec-emoji ram-emoji">💾</span> NVMe RAM</span>
                         <span className="spec-value">{plan.ram}</span>
                       </div>
                       <div className="spec">
-                        <span className="spec-label"><span className="spec-emoji cpu-emoji">⚙️</span> CPU</span>
+                        <span className="spec-label"><span className="spec-emoji cpu-emoji">💎</span> Ryzen 9 CPU</span>
                         <span className="spec-value">{plan.cpu}</span>
                       </div>
                       <div className="spec">
-                        <span className="spec-label"><span className="spec-emoji storage-emoji">💿</span> Storage</span>
+                        <span className="spec-label"><span className="spec-emoji storage-emoji">🚀</span> Gen4 SSD</span>
                         <span className="spec-value">{plan.storage}</span>
                       </div>
                       <div className="spec">
-                        <span className="spec-label"><span className="spec-emoji location-emoji">🌍</span> Location</span>
+                        <span className="spec-label"><span className="spec-emoji location-emoji">🌏</span> Node Location</span>
                         <span className="spec-value">{plan.location}</span>
                       </div>
                       <div className="spec">
@@ -606,7 +607,7 @@ const PaidPlans = () => {
 
               {/* Flame Custom Plan Card - Before Premium Plans Include */}
               <div style={{ marginTop: '30px', marginBottom: '30px' }}>
-                <p style={{ textAlign: 'center', color: '#FF6A00', marginBottom: '15px', fontSize: '0.95rem', textShadow: '0 0 10px rgba(255, 106, 0, 0.8), 0 0 20px rgba(255, 106, 0, 0.5), 0 0 30px rgba(255, 46, 0, 0.3)', fontWeight: '600' }}>
+                <p className="custom-alert">
                   ⚠️ Alert: If you want to make custom plan, the price will be higher than normal plans
                 </p>
                 <div
@@ -620,14 +621,14 @@ const PaidPlans = () => {
                     padding: '25px 30px'
                   }}
                 >
-                  <h3 style={{ background: 'linear-gradient(135deg, #FF2E00, #FF6A00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', fontSize: '1.3rem' }}>
+                  <h3 className="custom-plan-header" style={{ background: 'linear-gradient(135deg, #FF2E00, #FF6A00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     <img src="/logo.png" alt="" style={{ width: '28px', height: '28px' }} />
                     Custom Flame Plan
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '400', marginLeft: '10px' }}>- Create your own Flame Plan</span>
+                    <span>- Create your own Flame Plan</span>
                   </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', alignItems: 'center' }}>
+                  <div className="custom-plan-grid">
                     {/* RAM Input */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="custom-input-card">
                       <span style={{ background: 'transparent', border: '2px solid #FF2E00', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF2E00" strokeWidth="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="4" y1="10" x2="20" y2="10" /></svg>
                       </span>
@@ -661,7 +662,7 @@ const PaidPlans = () => {
                     </div>
 
                     {/* CPU Input */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="custom-input-card">
                       <span style={{ background: 'transparent', border: '2px solid #FF2E00', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF2E00" strokeWidth="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><circle cx="12" cy="12" r="3" /></svg>
                       </span>
@@ -695,7 +696,7 @@ const PaidPlans = () => {
                     </div>
 
                     {/* SSD Input */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="custom-input-card">
                       <span style={{ background: 'transparent', border: '2px solid #FF2E00', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF2E00" strokeWidth="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="4" y1="10" x2="20" y2="10" /></svg>
                       </span>
@@ -730,7 +731,7 @@ const PaidPlans = () => {
 
                     {/* Order Button with Price */}
                     <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', background: 'linear-gradient(135deg, rgba(255, 46, 0, 0.2), rgba(255, 106, 0, 0.1))', padding: '15px 20px', borderRadius: '16px', border: '2px solid rgba(255, 106, 0, 0.5)' }}
+                      className="custom-order-btn-group"
                       onClick={() => {
                         if (!user) {
                           navigate('/signup');

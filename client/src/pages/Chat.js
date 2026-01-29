@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth, supabase } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
 const Chat = () => {
@@ -56,7 +57,7 @@ const Chat = () => {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('users')
         .select('*')
         .order('last_seen', { ascending: false, nullsFirst: false });
@@ -79,7 +80,7 @@ const Chat = () => {
     if (!user?.id) return;
 
     try {
-      let query = supabase
+      let query = api
         .from('chat_messages')
         .select('*, sender:users!sender_id(username, avatar), receiver:users!receiver_id(username, avatar)')
         .order('created_at', { ascending: true });
@@ -166,7 +167,7 @@ const Chat = () => {
 
       console.log(`Sending message to ${receiverId}: ${msgText}`);
 
-      const { error } = await supabase
+      const { error } = await api
         .from('chat_messages')
         .insert([{
           sender_id: user.id,
@@ -442,7 +443,7 @@ const Chat = () => {
                 const updates = { username: editData.username };
                 if (editAvatarPreview) updates.avatar = editAvatarPreview;
 
-                const { error } = await supabase
+                const { error } = await api
                   .from('users')
                   .update(updates)
                   .eq('id', selectedUser.id);

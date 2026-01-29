@@ -6,15 +6,18 @@ const router = express.Router();
 
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    let sql = 'SELECT * FROM tickets WHERE user_id = ? ORDER BY created_at DESC';
-    let params = [req.user.id];
+    const ticketsRef = prepare('tickets');
+    let tickets;
 
     if (req.user.isAdmin) {
-      sql = 'SELECT * FROM tickets ORDER BY created_at DESC';
-      params = [];
+      tickets = await ticketsRef.all('created_at', 'desc');
+    } else {
+      // Small limitation: Shim doesn't support where() easily for all(), 
+      // let's fetch all and filter or add more to shim.
+      // For Firestore-scale, we should filter in query.
+      const allTickets = await ticketsRef.all('created_at', 'desc');
+      tickets = allTickets.filter(t => t.user_id === req.user.id);
     }
-
-    const tickets = await prepare(sql).all(...params);
 
     const mappedTickets = (tickets || []).map(t => ({
       id: t.id,
@@ -41,8 +44,14 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   try {
-    const result = await prepare('INSERT INTO tickets (user_id, subject, message, screenshot, status, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
-      .run(req.user.id, subject, message, screenshot || null, 'pending');
+    const result = await prepare('tickets').run({
+      user_id: req.user.id,
+      subject,
+      message,
+      screenshot: screenshot || null,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    });
 
     res.json({ id: result.lastInsertRowid, message: 'Ticket submitted successfully' });
   } catch (err) {
@@ -54,7 +63,10 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { status, admin_response } = req.body;
   try {
-    await prepare('UPDATE tickets SET status=?, admin_response=? WHERE id=?').run(status, admin_response, req.params.id);
+    await prepare('tickets').update(req.params.id, {
+      status,
+      admin_response: admin_response || null
+    });
     res.json({ message: 'Ticket updated successfully' });
   } catch (err) {
     console.error('Error updating ticket:', err);

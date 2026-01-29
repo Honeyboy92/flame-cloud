@@ -1,47 +1,59 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { prepare, saveDB } = require('../database');
+const { prepare } = require('../database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-// Apply admin check selectively below
-
 // Paid Plans CRUD (Admin only)
 router.get('/paid-plans', adminMiddleware, async (req, res) => {
-  const plans = await prepare('SELECT * FROM paid_plans ORDER BY sort_order').all();
+  const plans = await prepare('paid_plans').all('sort_order', 'asc');
   res.json(plans);
 });
 
 router.post('/paid-plans', adminMiddleware, async (req, res) => {
   const { name, ram, cpu, storage, location, price, discount, sort_order } = req.body;
-  // Get max sort_order and add 1 to put new plan at end
-  const maxOrder = await prepare('SELECT MAX(sort_order) as "maxOrder" FROM paid_plans').get();
-  const actualMax = (maxOrder && (maxOrder.maxOrder || maxOrder.maxorder)) || 0;
+  const plansRef = prepare('paid_plans');
+  const plans = await plansRef.all('sort_order', 'desc');
+  const actualMax = (plans.length > 0) ? (plans[0].sort_order || 0) : 0;
   const newOrder = sort_order || (actualMax + 1);
-  const result = await prepare('INSERT INTO paid_plans (name, ram, cpu, storage, location, price, discount, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(name, ram, cpu, storage || '10GB', location, price, discount || 0, newOrder);
-  if (saveDB) saveDB();
+
+  const result = await plansRef.run({
+    name, ram, cpu, storage: storage || '10GB', location, price,
+    discount: discount || 0, sort_order: newOrder, is_active: 1
+  });
   res.json({ id: result.lastInsertRowid });
 });
 
 router.put('/paid-plans/:id', adminMiddleware, async (req, res) => {
   const { name, ram, cpu, storage, location, price, discount, sort_order } = req.body;
-  await prepare('UPDATE paid_plans SET name=?, ram=?, cpu=?, storage=?, location=?, price=?, discount=?, sort_order=? WHERE id=?').run(name, ram, cpu, storage || '10GB', location, price, discount || 0, sort_order || 0, req.params.id);
-  if (saveDB) saveDB();
+  const updates = {};
+  if (name) updates.name = name;
+  if (ram) updates.ram = ram;
+  if (cpu) updates.cpu = cpu;
+  if (storage) updates.storage = storage;
+  if (location) updates.location = location;
+  if (price) updates.price = price;
+  if (typeof discount !== 'undefined') updates.discount = discount;
+  if (typeof sort_order !== 'undefined') updates.sort_order = sort_order;
+
+  await prepare('paid_plans').update(req.params.id, updates);
   res.json({ message: 'Plan updated' });
 });
 
 router.delete('/paid-plans/:id', adminMiddleware, async (req, res) => {
-  await prepare('DELETE FROM paid_plans WHERE id=?').run(req.params.id);
-  if (saveDB) saveDB();
+  await prepare('paid_plans').delete(req.params.id);
   res.json({ message: 'Plan deleted' });
 });
 
 // Restore default paid plans (admin only)
-router.post('/paid-plans/restore-defaults', adminMiddleware, (req, res) => {
-  const existing = prepare('SELECT name FROM paid_plans').all().map(r => r.name.toLowerCase());
+router.post('/paid-plans/restore-defaults', adminMiddleware, async (req, res) => {
+  const plansRef = prepare('paid_plans');
+  const existingDocs = await plansRef.all();
+  const existingNames = existingDocs.map(r => r.name.toLowerCase());
+
   const defaults = [
     { name: 'Bronze Plan', ram: '2GB', cpu: '100%', storage: '10 GB SSD', location: 'UAE', price: '200 PKR' },
     { name: 'Silver Plan', ram: '4GB', cpu: '150%', storage: '20 GB SSD', location: 'UAE', price: '400 PKR' },
@@ -54,199 +66,205 @@ router.post('/paid-plans/restore-defaults', adminMiddleware, (req, res) => {
     { name: 'Black Ruby Plan', ram: '34GB', cpu: '2000%', storage: '200 GB SSD', location: 'UAE', price: '3400 PKR' }
   ];
 
-  // Insert missing defaults preserving order
   let inserted = 0;
-  defaults.forEach((p, idx) => {
-    if (!existing.includes(p.name.toLowerCase())) {
-      // Determine next sortOrder
-      const maxOrder = prepare('SELECT MAX(sort_order) as maxOrder FROM paid_plans').get();
-      const newOrder = (maxOrder && maxOrder.maxOrder) ? maxOrder.maxOrder + 1 : idx + 1;
-      prepare('INSERT INTO paid_plans (name, ram, cpu, storage, location, price, discount, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(p.name, p.ram, p.cpu, p.storage, p.location, p.price, 0, newOrder);
+  for (let i = 0; i < defaults.length; i++) {
+    const p = defaults[i];
+    if (!existingNames.includes(p.name.toLowerCase())) {
+      await plansRef.run({ ...p, discount: 0, sort_order: i + 1, is_active: 1 });
       inserted++;
     }
-  });
+  }
 
   res.json({ message: `Defaults restored, inserted ${inserted} plans` });
-  saveDB();
 });
 
 // Free Plans CRUD (Admin only)
 router.get('/free-plans', adminMiddleware, async (req, res) => {
-  const plans = await prepare('SELECT * FROM free_plans ORDER BY sort_order').all();
+  const plans = await prepare('free_plans').all('sort_order', 'asc');
   res.json(plans);
 });
 
 router.post('/free-plans', adminMiddleware, async (req, res) => {
   const { name, ram, cpu, location, description, sort_order } = req.body;
-  const result = await prepare('INSERT INTO free_plans (name, ram, cpu, location, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)').run(name, ram, cpu, location, description, sort_order || 0);
-  if (saveDB) saveDB();
+  const result = await prepare('free_plans').run({
+    name, ram, cpu, location, description, sort_order: sort_order || 0
+  });
   res.json({ id: result.lastInsertRowid });
 });
 
-router.put('/free-plans/:id', (req, res) => {
+router.put('/free-plans/:id', adminMiddleware, async (req, res) => {
   const { name, ram, cpu, location, description, sort_order } = req.body;
-  prepare('UPDATE free_plans SET name=?, ram=?, cpu=?, location=?, description=?, sort_order=? WHERE id=?').run(name, ram, cpu, location, description, sort_order || 0, req.params.id);
-  saveDB();
+  const updates = {};
+  if (name) updates.name = name;
+  if (ram) updates.ram = ram;
+  if (cpu) updates.cpu = cpu;
+  if (location) updates.location = location;
+  if (description) updates.description = description;
+  if (typeof sort_order !== 'undefined') updates.sort_order = sort_order;
+
+  await prepare('free_plans').update(req.params.id, updates);
   res.json({ message: 'Plan updated' });
 });
 
-router.delete('/free-plans/:id', (req, res) => {
-  prepare('DELETE FROM free_plans WHERE id=?').run(req.params.id);
-  saveDB();
+router.delete('/free-plans/:id', adminMiddleware, async (req, res) => {
+  await prepare('free_plans').delete(req.params.id);
   res.json({ message: 'Plan deleted' });
 });
 
 // Tickets (Admin only for full list/update)
 router.get('/tickets', adminMiddleware, async (req, res) => {
-  const tickets = await prepare(`
-    SELECT t.*, u.username, u.email as "userEmail" 
-    FROM tickets t 
-    JOIN users u ON t.user_id = u.id 
-    ORDER BY t.created_at DESC
-  `).all();
-  res.json(tickets);
+  const tickets = await prepare('tickets').all('created_at', 'desc');
+  // Enrichment with usernames (simple version for Firestore)
+  const usersRef = prepare('users');
+  const enriched = await Promise.all(tickets.map(async (t) => {
+    const user = await usersRef.get('id', t.user_id);
+    return { ...t, username: user?.username || 'Unknown', userEmail: user?.email || 'Unknown' };
+  }));
+  res.json(enriched);
 });
 
 router.put('/tickets/:id', adminMiddleware, async (req, res) => {
   const { status, adminResponse } = req.body;
-  await prepare('UPDATE tickets SET status=?, admin_response=? WHERE id=?').run(status, adminResponse, req.params.id);
-  if (saveDB) saveDB();
+  await prepare('tickets').update(req.params.id, { status, admin_response: adminResponse });
   res.json({ message: 'Ticket updated' });
 });
 
-
-
 // Admin credentials update
-router.put('/credentials', (req, res) => {
+router.put('/credentials', adminMiddleware, async (req, res) => {
   const { email, password } = req.body;
-  if (email) prepare('UPDATE users SET email=? WHERE id=?').run(email, req.user.id);
-  if (password) prepare('UPDATE users SET password=? WHERE id=?').run(bcrypt.hashSync(password, 10), req.user.id);
-  saveDB();
+  const updates = {};
+  if (email) updates.email = email;
+  if (password) updates.password = bcrypt.hashSync(password, 10);
+
+  if (Object.keys(updates).length > 0) {
+    await prepare('users').update(req.user.id, updates);
+  }
   res.json({ message: 'Credentials updated' });
 });
 
 // About Content Management
 router.get('/about', async (req, res) => {
   try {
-    const about = await prepare('SELECT * FROM about_content LIMIT 1').get();
-    if (about) {
-      res.json(about);
+    const about = await prepare('about_content').all();
+    if (about && about.length > 0) {
+      res.json(about[0]);
     } else {
-      const defaultData = {
+      res.json({
         id: 1,
         content: "Flame Cloud is a next-generation gaming server hosting platform built for speed, power, and reliability.",
         founder_name: "Flame Founder",
-        founder_photo: null,
         owner_name: "Flame Owner",
-        owner_photo: null,
-        management_name: "Flame Management",
-        management_photo: null
-      };
-      res.json(defaultData);
+        management_name: "Flame Management"
+      });
     }
   } catch (error) {
-    console.error('Error in admin about route:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });
 
 router.put('/about', adminMiddleware, async (req, res) => {
   const { content, founder_name, founder_photo, owner_name, owner_photo, management_name, management_photo } = req.body;
+  const aboutRef = prepare('about_content');
+  const existing = await aboutRef.all();
 
-  // Check if record exists
-  const exists = await prepare('SELECT id FROM about_content LIMIT 1').get();
+  const updates = {
+    content, founder_name, founder_photo: founder_photo || null,
+    owner_name, owner_photo: owner_photo || null,
+    management_name, management_photo: management_photo || null
+  };
 
-  if (exists) {
-    await prepare(`UPDATE about_content SET 
-      content=?, founder_name=?, founder_photo=?, 
-      owner_name=?, owner_photo=?, management_name=?, management_photo=? 
-      WHERE id=?`).run(
-      content, founder_name, founder_photo || null,
-      owner_name, owner_photo || null, management_name, management_photo || null,
-      exists.id
-    );
+  if (existing.length > 0) {
+    await aboutRef.update(existing[0].id, updates);
   } else {
-    await prepare(`INSERT INTO about_content 
-      (content, founder_name, founder_photo, owner_name, owner_photo, management_name, management_photo) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-      content, founder_name, founder_photo || null,
-      owner_name, owner_photo || null, management_name, management_photo || null
-    );
+    await aboutRef.run(updates);
   }
 
-  if (saveDB) saveDB();
   res.json({ message: 'About content updated' });
 });
 
 // Location Settings (Admin only)
-router.get('/locations', adminMiddleware, (req, res) => {
-  const locations = prepare('SELECT * FROM location_settings ORDER BY sort_order').all();
+router.get('/locations', adminMiddleware, async (req, res) => {
+  const locations = await prepare('location_settings').all('sort_order', 'asc');
   res.json(locations);
 });
 
-router.put('/locations/:id', adminMiddleware, (req, res) => {
+router.put('/locations/:id', adminMiddleware, async (req, res) => {
   const { isAvailable } = req.body;
-  prepare('UPDATE location_settings SET is_available=? WHERE id=?').run(isAvailable ? 1 : 0, req.params.id);
-  saveDB();
+  await prepare('location_settings').update(req.params.id, { is_available: isAvailable ? 1 : 0 });
   res.json({ message: 'Location updated' });
 });
 
 // YT Partners CRUD (Admin only)
-router.get('/yt-partners', adminMiddleware, (req, res) => {
-  const partners = prepare('SELECT * FROM yt_partners ORDER BY sort_order ASC, created_at DESC, id DESC').all();
+router.get('/yt-partners', adminMiddleware, async (req, res) => {
+  const partners = await prepare('yt_partners').all('sort_order', 'asc');
   res.json(partners);
 });
 
-router.post('/yt-partners', adminMiddleware, (req, res) => {
+router.post('/yt-partners', adminMiddleware, async (req, res) => {
   const { name, link, logo, isFeatured } = req.body;
-  const createdAt = new Date().toISOString();
-  // Get max sort_order and add 1
-  const maxOrder = prepare('SELECT MAX(sort_order) as maxOrder FROM yt_partners').get();
-  const newOrder = (maxOrder && maxOrder.maxOrder) ? maxOrder.maxOrder + 1 : 1;
-  const result = prepare('INSERT INTO yt_partners (name, channel_link, logo, is_featured, created_at, sort_order) VALUES (?, ?, ?, ?, ?, ?)').run(name, link, logo || null, isFeatured ? 1 : 0, createdAt, newOrder);
-  saveDB();
+  const partnersRef = prepare('yt_partners');
+  const existing = await partnersRef.all('sort_order', 'desc');
+  const newOrder = (existing.length > 0) ? (existing[0].sort_order || 0) + 1 : 1;
+
+  const result = await partnersRef.run({
+    name, channel_link: link, logo: logo || null,
+    is_featured: isFeatured ? 1 : 0,
+    sort_order: newOrder,
+    created_at: new Date().toISOString()
+  });
   res.json({ id: result.lastInsertRowid });
 });
 
-router.put('/yt-partners/:id', adminMiddleware, (req, res) => {
+router.put('/yt-partners/:id', adminMiddleware, async (req, res) => {
   const { name, link, logo, isFeatured } = req.body;
-  prepare('UPDATE yt_partners SET name=?, channel_link=?, logo=?, is_featured=? WHERE id=?').run(name, link, logo || null, isFeatured ? 1 : 0, req.params.id);
-  saveDB();
+  const updates = {};
+  if (name) updates.name = name;
+  if (link) updates.channel_link = link;
+  if (typeof logo !== 'undefined') updates.logo = logo;
+  if (typeof isFeatured !== 'undefined') updates.is_featured = isFeatured ? 1 : 0;
+
+  await prepare('yt_partners').update(req.params.id, updates);
   res.json({ message: 'Partner updated' });
 });
 
-router.delete('/yt-partners/:id', adminMiddleware, (req, res) => {
-  prepare('DELETE FROM yt_partners WHERE id=?').run(req.params.id);
-  saveDB();
+router.delete('/yt-partners/:id', adminMiddleware, async (req, res) => {
+  await prepare('yt_partners').delete(req.params.id);
   res.json({ message: 'Partner deleted' });
 });
 
 // YT Partners Reorder (Admin only)
-router.put('/yt-partners-reorder', adminMiddleware, (req, res) => {
+router.put('/yt-partners-reorder', adminMiddleware, async (req, res) => {
   const { orderedIds } = req.body;
-  orderedIds.forEach((id, index) => {
-    prepare('UPDATE yt_partners SET sort_order=? WHERE id=?').run(index + 1, id);
-  });
-  saveDB();
+  const partnersRef = prepare('yt_partners');
+  for (let i = 0; i < orderedIds.length; i++) {
+    await partnersRef.update(orderedIds[i], { sort_order: i + 1 });
+  }
   res.json({ message: 'Partners reordered' });
 });
 
 // Site Settings
 router.get('/settings/:key', async (req, res) => {
-  const setting = await prepare('SELECT * FROM site_settings WHERE key=?').get(req.params.key);
+  const setting = await prepare('site_settings').get('id', req.params.key);
   res.json(setting || { key: req.params.key, value: '0' });
 });
 
 router.put('/settings/:key', adminMiddleware, async (req, res) => {
   const { value } = req.body;
-  const exists = await prepare('SELECT * FROM site_settings WHERE key=?').get(req.params.key);
-  if (exists) {
-    await prepare('UPDATE site_settings SET value=? WHERE key=?').run(value, req.params.key);
-  } else {
-    await prepare('INSERT INTO site_settings (key, value) VALUES (?, ?)').run(req.params.key, value);
-  }
-  if (saveDB) saveDB();
+  const settingsRef = prepare('site_settings');
+  // For site settings, we use fixed keys as doc IDs
+  await settingsRef.update(req.params.key, { value }).catch(async () => {
+    // If update fails (doc doesn't exist), we try set but our shim uses add
+    // Let's use get/run logic
+    const exists = await settingsRef.get('id', req.params.key);
+    if (exists) {
+      await settingsRef.update(req.params.key, { value });
+    } else {
+      // Small adjustment: our shim adds random ID. For settings we need fixed ID.
+      // We can manually use getDB()
+      const admin = require('firebase-admin');
+      await admin.firestore().collection('site_settings').doc(req.params.key).set({ value });
+    }
+  });
   res.json({ message: 'Setting updated' });
 });
 

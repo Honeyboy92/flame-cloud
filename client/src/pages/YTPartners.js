@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const YTPartners = () => {
   const [partners, setPartners] = useState([]);
@@ -11,7 +11,7 @@ const YTPartners = () => {
 
   const fetchPartners = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('yt_partners')
         .select('*')
         .eq('is_active', true)

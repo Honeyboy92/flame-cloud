@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, supabase } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
 const AdminPanel = () => {
@@ -67,7 +68,7 @@ const AdminPanel = () => {
 
   const handleLocationToggle = async (location) => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('location_settings')
         .update({ is_available: !location.is_available }) // Ensure column match DB
         .eq('id', location.id);
@@ -87,7 +88,7 @@ const AdminPanel = () => {
 
   const handleSavePlan = async () => {
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('paid_plans')
         .update(formData)
         .eq('id', editingPlan);
@@ -114,7 +115,7 @@ const AdminPanel = () => {
         is_active: true
       };
 
-      const { error } = await supabase
+      const { error } = await api
         .from('paid_plans')
         .insert([payload]);
 
@@ -132,7 +133,7 @@ const AdminPanel = () => {
   const handleDeletePlan = async (id) => {
     if (!confirm('Are you sure you want to delete this plan?')) return;
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('paid_plans')
         .delete()
         .eq('id', id);
@@ -162,7 +163,7 @@ const AdminPanel = () => {
       if (updates.status) dbUpdates.status = updates.status;
       if (updates.adminResponse) dbUpdates.admin_response = updates.adminResponse;
 
-      const { error } = await supabase
+      const { error } = await api
         .from('tickets')
         .update(dbUpdates)
         .eq('id', ticketId);
@@ -213,7 +214,8 @@ const AdminPanel = () => {
   const handleDeleteUser = async (id) => {
     if (!confirm('Delete this user? (Only removes from database, not Auth system)')) return;
     try {
-      const { error } = await supabase.from('users').delete().eq('id', id);
+      const { data, error } = await api
+        .from('users').delete().eq('id', id);
       if (!error) loadData();
     } catch (e) { console.error(e); }
   };

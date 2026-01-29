@@ -9,164 +9,199 @@ router.get('/', async (req, res) => {
   const table = req.baseUrl.split('/').pop();
 
   if (table === 'location_settings') {
-    const locations = await prepare('SELECT * FROM location_settings ORDER BY sort_order').all();
+    const locations = await prepare('location_settings').all('sort_order', 'asc');
     return res.json(locations);
   }
 
-  if (table === 'site_settings') {
+  if (table === 'site_settings' || table === 'settings') {
     const { key } = req.query;
     if (key) {
-      const setting = await prepare('SELECT * FROM site_settings WHERE key=?').get(key);
+      const setting = await prepare('site_settings').get('id', key); // Key acts as ID in site_settings
       return res.json(setting || { key, value: '0' });
     }
-    const settings = await prepare('SELECT * FROM site_settings').all();
+    const settings = await prepare('site_settings').all();
     return res.json(settings);
   }
 
   // Default to paid_plans
   const showAll = req.query.is_active === 'false' || req.query.all === 'true';
-  let sql = 'SELECT * FROM paid_plans WHERE is_active = 1 ORDER BY sort_order';
+  const plans = await prepare('paid_plans').all('sort_order', 'asc');
 
   if (showAll) {
-    sql = 'SELECT * FROM paid_plans ORDER BY sort_order';
+    res.json(plans);
+  } else {
+    res.json(plans.filter(p => p.is_active));
   }
-
-  const plans = await prepare(sql).all();
-  res.json(plans);
 });
 
 // Admin CRUD for paid plans (mapped to table: paid_plans)
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   const { name, ram, cpu, storage, location, price, discount, sort_order } = req.body;
-  const result = await prepare('INSERT INTO paid_plans (name, ram, cpu, storage, location, price, discount, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(name, ram, cpu, storage, location, price, discount || 0, sort_order || 0);
+  const result = await prepare('paid_plans').run({
+    name, ram, cpu, storage, location, price,
+    discount: discount || 0,
+    sort_order: sort_order || 0,
+    is_active: 1
+  });
   res.json({ id: result.lastInsertRowid, message: 'Plan created' });
 });
 
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const { name, ram, cpu, storage, location, price, discount, sort_order } = req.body;
-  await prepare('UPDATE paid_plans SET name=?, ram=?, cpu=?, storage=?, location=?, price=?, discount=?, sort_order=? WHERE id=?')
-    .run(name, ram, cpu, storage, location, price, discount || 0, sort_order || 0, req.params.id);
+  const { name, ram, cpu, storage, location, price, discount, sort_order, is_active } = req.body;
+  const updates = {};
+  if (name) updates.name = name;
+  if (ram) updates.ram = ram;
+  if (cpu) updates.cpu = cpu;
+  if (storage) updates.storage = storage;
+  if (location) updates.location = location;
+  if (price) updates.price = price;
+  if (typeof discount !== 'undefined') updates.discount = discount;
+  if (typeof sort_order !== 'undefined') updates.sort_order = sort_order;
+  if (typeof is_active !== 'undefined') updates.is_active = is_active;
+
+  await prepare('paid_plans').update(req.params.id, updates);
   res.json({ message: 'Plan updated' });
 });
 
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  await prepare('DELETE FROM paid_plans WHERE id=?').run(req.params.id);
+  await prepare('paid_plans').delete(req.params.id);
   res.json({ message: 'Plan deleted' });
 });
 
 // Added generic table name route for shim compatibility
 router.get('/paid_plans', async (req, res) => {
-  const plans = await prepare('SELECT * FROM paid_plans WHERE is_active = 1 ORDER BY sort_order').all();
-  res.json(plans);
+  const plans = await prepare('paid_plans').all('sort_order', 'asc');
+  res.json(plans.filter(p => p.is_active));
 });
 
 router.get('/paid', async (req, res) => {
-  const plans = await prepare('SELECT * FROM paid_plans WHERE is_active = 1 ORDER BY sort_order').all();
-  res.json(plans);
+  const plans = await prepare('paid_plans').all('sort_order', 'asc');
+  res.json(plans.filter(p => p.is_active));
 });
 
 router.get('/free', async (req, res) => {
-  const plans = await prepare('SELECT * FROM free_plans ORDER BY sort_order').all();
+  const plans = await prepare('free_plans').all('sort_order', 'asc');
   res.json(plans);
 });
 
 // Get location availability (mapped from table: location_settings)
 router.get('/locations', async (req, res) => {
-  const locations = await prepare('SELECT * FROM location_settings ORDER BY sort_order').all();
+  const locations = await prepare('location_settings').all('sort_order', 'asc');
   res.json(locations);
 });
 
 router.put('/locations/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { is_available } = req.body;
-  await prepare('UPDATE location_settings SET is_available=? WHERE id=?').run(is_available ? 1 : 0, req.params.id);
+  await prepare('location_settings').update(req.params.id, { is_available: is_available ? 1 : 0 });
   res.json({ message: 'Location updated' });
 });
 
 // Added generic table name route for shim compatibility
 router.get('/location_settings', async (req, res) => {
-  const locations = await prepare('SELECT * FROM location_settings ORDER BY sort_order').all();
+  const locations = await prepare('location_settings').all('sort_order', 'asc');
   res.json(locations);
 });
 
 // Check if user can access free plans
 router.get('/free-plan-status', authMiddleware, async (req, res) => {
   const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
-  const user = await prepare('SELECT has_claimed_free_plan FROM users WHERE id = ?').get(req.user.id);
-  const ipClaimed = await prepare('SELECT id FROM users WHERE claimed_ip = ? AND has_claimed_free_plan = 1').get(clientIP);
+  const usersRef = prepare('users');
+  const user = await usersRef.get('id', req.user.id);
+
+  // Checking IP claim is complex with simple shim, we could skip or implement
+  const ipClaimed = await usersRef.get('claimed_ip', clientIP);
 
   res.json({
-    canClaim: !user?.has_claimed_free_plan && !ipClaimed,
-    hasClaimed: (user?.has_claimed_free_plan === 1 || user?.has_claimed_free_plan === true),
-    ipAlreadyUsed: !!ipClaimed
+    canClaim: !user?.has_claimed_free_plan && !(ipClaimed && ipClaimed.has_claimed_free_plan),
+    hasClaimed: !!user?.has_claimed_free_plan,
+    ipAlreadyUsed: !!(ipClaimed && ipClaimed.has_claimed_free_plan)
   });
 });
 
 // Claim free plan
-router.post('/claim-free', authMiddleware, (req, res) => {
+router.post('/claim-free', authMiddleware, async (req, res) => {
   const { planId } = req.body;
   const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
-  const user = prepare('SELECT has_claimed_free_plan FROM users WHERE id = ?').get(req.user.id);
+  const usersRef = prepare('users');
+  const user = await usersRef.get('id', req.user.id);
+
   if (user?.has_claimed_free_plan) {
     return res.status(400).json({ error: 'You have already claimed a free plan' });
   }
-  const ipClaimed = prepare('SELECT id FROM users WHERE claimed_ip = ? AND has_claimed_free_plan = 1').get(clientIP);
-  if (ipClaimed) {
+
+  const ipClaimed = await usersRef.get('claimed_ip', clientIP);
+  if (ipClaimed && ipClaimed.has_claimed_free_plan) {
     return res.status(400).json({ error: 'A free plan has already been claimed from this IP address' });
   }
-  const plan = prepare('SELECT * FROM free_plans WHERE id = ?').get(planId);
+
+  const plan = await prepare('free_plans').get('id', planId);
   if (!plan) {
     return res.status(404).json({ error: 'Plan not found' });
   }
-  prepare('UPDATE users SET has_claimed_free_plan = 1, claimed_ip = ? WHERE id = ?').run(clientIP, req.user.id);
-  prepare('INSERT INTO tickets (user_id, subject, message, status) VALUES (?, ?, ?, ?)').run(
-    req.user.id,
-    `Free Plan: ${plan.name}`,
-    `Free Plan Claimed\nPlan: ${plan.name}\nRAM: ${plan.ram}\nCPU: ${plan.cpu}\nLocation: ${plan.location}`,
-    'pending'
-  );
+
+  await usersRef.update(req.user.id, { has_claimed_free_plan: 1, claimed_ip: clientIP });
+  await prepare('tickets').run({
+    user_id: req.user.id,
+    subject: `Free Plan: ${plan.name}`,
+    message: `Free Plan Claimed\nPlan: ${plan.name}\nRAM: ${plan.ram}\nCPU: ${plan.cpu}\nLocation: ${plan.location}`,
+    status: 'pending'
+  });
   res.json({ success: true, message: 'Free plan claimed successfully!' });
 });
 
 // Public YT Partners
-router.get('/yt-partners', (req, res) => {
-  const partners = prepare('SELECT * FROM yt_partners ORDER BY sort_order ASC, created_at DESC, id DESC').all();
+router.get('/yt-partners', async (req, res) => {
+  const partners = await prepare('yt_partners').all('sort_order', 'asc');
   res.json(partners);
 });
 
 // Admin CRUD for YT Partners
-router.post('/yt-partners', authMiddleware, adminMiddleware, (req, res) => {
+router.post('/yt-partners', authMiddleware, adminMiddleware, async (req, res) => {
   const { name, channel_link, logo, is_featured } = req.body;
-  const result = prepare('INSERT INTO yt_partners (name, channel_link, logo, is_featured) VALUES (?, ?, ?, ?)')
-    .run(name, channel_link, logo || null, is_featured ? 1 : 0);
+  const result = await prepare('yt_partners').run({
+    name,
+    channel_link,
+    logo: logo || null,
+    is_featured: is_featured ? 1 : 0
+  });
   res.json({ id: result.lastInsertRowid, message: 'Partner added' });
 });
 
-router.put('/yt-partners/:id', authMiddleware, adminMiddleware, (req, res) => {
+router.put('/yt-partners/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { name, channel_link, logo, is_featured } = req.body;
-  prepare('UPDATE yt_partners SET name=?, channel_link=?, logo=?, is_featured=? WHERE id=?')
-    .run(name, channel_link, logo || null, is_featured ? 1 : 0, req.params.id);
+  const updates = {};
+  if (name) updates.name = name;
+  if (channel_link) updates.channel_link = channel_link;
+  if (typeof logo !== 'undefined') updates.logo = logo;
+  if (typeof is_featured !== 'undefined') updates.is_featured = is_featured ? 1 : 0;
+
+  await prepare('yt_partners').update(req.params.id, updates);
   res.json({ message: 'Partner updated' });
 });
 
-router.delete('/yt-partners/:id', authMiddleware, adminMiddleware, (req, res) => {
-  prepare('DELETE FROM yt_partners WHERE id=?').run(req.params.id);
+router.delete('/yt-partners/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  await prepare('yt_partners').delete(req.params.id);
   res.json({ message: 'Partner deleted' });
 });
 
 // Public site settings
-router.get('/settings/:key', (req, res) => {
-  const setting = prepare('SELECT * FROM site_settings WHERE key=?').get(req.params.key);
+router.get('/settings/:key', async (req, res) => {
+  const setting = await prepare('site_settings').get('id', req.params.key);
   res.json(setting || { key: req.params.key, value: '0' });
 });
 
 // Create an order/ticket for a paid plan
-router.post('/order', authMiddleware, (req, res) => {
+router.post('/order', authMiddleware, async (req, res) => {
   const { subject, message, screenshot } = req.body;
   if (!subject || !message) return res.status(400).json({ error: 'Subject and message required' });
   try {
-    prepare('INSERT INTO tickets (user_id, subject, message, screenshot, status) VALUES (?, ?, ?, ?, ?)')
-      .run(req.user.id, subject, message, screenshot || null, 'pending');
+    await prepare('tickets').run({
+      user_id: req.user.id,
+      subject,
+      message,
+      screenshot: screenshot || null,
+      status: 'pending'
+    });
     res.json({ message: 'Order submitted successfully' });
   } catch (err) {
     console.error('Error creating order:', err);

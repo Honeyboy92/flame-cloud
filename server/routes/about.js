@@ -1,23 +1,23 @@
 const express = require('express');
-const { getDB } = require('../database');
+const { prepare } = require('../database');
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const db = getDB();
-    const about = db.prepare("SELECT * FROM about_content LIMIT 1").get();
-    
-    if (about) {
+    const about = await prepare('about_content').all();
+
+    if (about && about.length > 0) {
+      const data = about[0];
       res.json({
-        id: about.id,
-        content: about.content,
-        founder_name: about.founder_name,
-        founder_photo: about.founder_photo,
-        owner_name: about.owner_name,
-        owner_photo: about.owner_photo,
-        management_name: about.management_name,
-        management_photo: about.management_photo
+        id: data.id,
+        content: data.content,
+        founder_name: data.founder_name,
+        founder_photo: data.founder_photo,
+        owner_name: data.owner_name,
+        owner_photo: data.owner_photo,
+        management_name: data.management_name,
+        management_photo: data.management_photo
       });
     } else {
       // Return default content if no data exists
@@ -46,5 +46,7 @@ router.get('/', async (req, res) => {
     });
   }
 });
+
+module.exports = router;
 
 module.exports = router;

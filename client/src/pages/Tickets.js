@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, supabase } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const Tickets = () => {
   const { user } = useAuth();
@@ -16,7 +17,7 @@ const Tickets = () => {
 
   const loadTickets = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('tickets')
         .select('*')
         .eq('user_id', user.id) // RLS should handle this too, but explicit filter is good
@@ -37,7 +38,7 @@ const Tickets = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await api
         .from('tickets')
         .insert([{
           user_id: user.id,

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { supabase } from '../supabaseClient';
+
 
 const AuthContext = createContext();
 
@@ -79,10 +79,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loading, updateUser, supabase }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export { supabase };
+

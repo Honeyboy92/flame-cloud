@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const About = () => {
   const [about, setAbout] = useState(null);
@@ -12,7 +12,7 @@ const About = () => {
 
   const fetchAbout = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await api
         .from('about_content')
         .select('*')
         .single();
@@ -388,69 +388,48 @@ const About = () => {
 
             <div style={{ position: 'relative', zIndex: 1 }}>
               <h2 style={{
-                fontSize: '2.2rem',
+                fontSize: '1.6rem',
                 fontWeight: '800',
-                background: 'linear-gradient(135deg, #FF2E00, #FF6A00, #FFD000)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '24px',
+                color: 'var(--text-primary)',
+                marginBottom: '28px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                <img src="/logo.png" alt="Flame Cloud" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
+                <img src="/logo.png" alt="" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                 About Flame Cloud
               </h2>
 
               {/* Key Features */}
-              <div style={{ marginTop: '32px' }}>
-                <h3 style={{
-                  fontSize: '1.3rem',
-                  fontWeight: '700',
-                  color: 'var(--text-primary)',
-                  marginBottom: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  ⚡ Why Choose Flame Cloud?
-                </h3>
-
+              <div style={{ marginTop: '20px' }}>
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {[
-                    { icon: '🚀', text: 'Ultra-Fast NVMe SSD Servers' },
-                    { icon: '🌍', text: 'Global Server Locations' },
-                    { icon: '🔒', text: 'DDoS Protection (Enterprise Level)' },
-                    { icon: '⚙️', text: 'Full Control Panel Access' },
-                    { icon: '🧠', text: 'Optimized for Minecraft & Game Servers' },
-                    { icon: '📦', text: 'One-Click Mod & Plugin Installation' },
-                    { icon: '⏱️', text: '99.9% Uptime Guarantee' },
-                    { icon: '💬', text: '24/7 Premium Support' },
-                    { icon: '💰', text: 'High Performance at Affordable Pricing' }
+                    { icon: '🔥', text: 'Ultra-Fast NVMe SSD Servers' },
+                    { icon: '☄️', text: 'Global Server Locations' },
+                    { icon: '📛', text: 'DDoS Protection' },
+                    { icon: '🛠️', text: 'Full Control Panel Access' },
+                    { icon: '⚡', text: 'Optimized Gaming Hardware' },
+                    { icon: '🧨', text: 'One-Click Mod Installations' },
+                    { icon: '☀️', text: '99.9% Uptime Guarantee' },
+                    { icon: '🏮', text: '24/7 Premium Support' }
                   ].map((feature, idx) => (
                     <div key={idx} style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 16px',
+                      gap: '16px',
+                      padding: '8px 12px',
                       background: 'transparent',
-                      borderRadius: '10px',
-                      border: '1px solid transparent',
+                      borderRadius: '12px',
                       transition: 'all 0.3s ease',
                       cursor: 'pointer'
                     }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.borderColor = 'transparent';
                         e.currentTarget.style.transform = 'translateX(8px)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.borderColor = 'transparent';
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}>
-                      <span style={{ fontSize: '1.3rem' }}>{feature.icon}</span>
+                      <div className="about-icon-box">{feature.icon}</div>
                       <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>
                         {feature.text}
                       </span>

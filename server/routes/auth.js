@@ -12,41 +12,50 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ error: 'All fields required' });
   }
   try {
+    const users = prepare('users');
+    const existing = await users.get('email', email);
+    if (existing) return res.status(400).json({ error: 'Email already exists' });
+
     const hashedPassword = bcrypt.hashSync(password, 10);
-    await prepare('INSERT INTO users (username, email, password) VALUES (?, ?, ?)').run(username, email, hashedPassword);
+    await users.run({ username, email, password: hashedPassword });
     res.json({ message: 'Account created successfully' });
   } catch (err) {
-    res.status(400).json({ error: 'Username or email already exists' });
+    console.error('Signup error:', err);
+    res.status(500).json({ error: 'Failed to create account' });
   }
 });
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await prepare('SELECT * FROM users WHERE email = ?').get(email);
+  const user = await prepare('users').get('email', email);
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const token = jwt.sign({ id: user.id, username: user.username, email: user.email, isAdmin: user.is_admin || user.isadmin }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { id: user.id, username: user.username, email: user.email, isAdmin: user.is_admin || user.isadmin } });
+  const token = jwt.sign({ id: user.id, username: user.username, email: user.email, isAdmin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { id: user.id, username: user.username, email: user.email, isAdmin: user.is_admin } });
 });
 
 router.get('/me', authMiddleware, async (req, res) => {
-  const user = await prepare('SELECT id, username, email, is_admin as isAdmin, avatar, created_at as createdAt FROM users WHERE id = ?').get(req.user.id);
-  res.json(user);
+  const user = await prepare('users').get('id', req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const { password, ...safeUser } = user;
+  res.json({ ...safeUser, isAdmin: !!user.is_admin });
 });
 
 // Update email
-router.put('/update-email', authMiddleware, (req, res) => {
+router.put('/update-email', authMiddleware, async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
   }
   try {
-    const existing = prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email, req.user.id);
-    if (existing) {
+    const users = prepare('users');
+    const existing = await users.get('email', email);
+    if (existing && existing.id !== req.user.id) {
       return res.status(400).json({ error: 'Email already in use' });
     }
-    prepare('UPDATE users SET email = ? WHERE id = ?').run(email, req.user.id);
+    await users.update(req.user.id, { email });
     res.json({ message: 'Email updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update email' });
@@ -54,18 +63,19 @@ router.put('/update-email', authMiddleware, (req, res) => {
 });
 
 // Update password
-router.put('/update-password', authMiddleware, (req, res) => {
+router.put('/update-password', authMiddleware, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Current and new password are required' });
   }
   try {
-    const user = prepare('SELECT password FROM users WHERE id = ?').get(req.user.id);
+    const users = prepare('users');
+    const user = await users.get('id', req.user.id);
     if (!bcrypt.compareSync(currentPassword, user.password)) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
     const hashedPassword = bcrypt.hashSync(newPassword, 10);
-    prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.user.id);
+    await users.update(req.user.id, { password: hashedPassword });
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update password' });
@@ -73,17 +83,18 @@ router.put('/update-password', authMiddleware, (req, res) => {
 });
 
 // Update username
-router.put('/update-username', authMiddleware, (req, res) => {
+router.put('/update-username', authMiddleware, async (req, res) => {
   const { username } = req.body;
   if (!username) {
     return res.status(400).json({ error: 'Username is required' });
   }
   try {
-    const existing = prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, req.user.id);
-    if (existing) {
+    const users = prepare('users');
+    const existing = await users.get('username', username);
+    if (existing && existing.id !== req.user.id) {
       return res.status(400).json({ error: 'Username already taken' });
     }
-    prepare('UPDATE users SET username = ? WHERE id = ?').run(username, req.user.id);
+    await users.update(req.user.id, { username });
     res.json({ message: 'Username updated successfully', username });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update username' });
@@ -91,34 +102,33 @@ router.put('/update-username', authMiddleware, (req, res) => {
 });
 
 // Update profile (Unified: username, email, avatar)
-router.put('/update-profile', authMiddleware, (req, res) => {
+router.put('/update-profile', authMiddleware, async (req, res) => {
   const { username, email, avatar } = req.body;
   const userId = req.user.id;
+  const users = prepare('users');
 
-  const updates = [];
-  if (username) updates.push({ k: 'username', v: username });
-  if (email) updates.push({ k: 'email', v: email });
-  if (typeof avatar !== 'undefined') updates.push({ k: 'avatar', v: avatar });
+  const updates = {};
+  if (username) updates.username = username;
+  if (email) updates.email = email;
+  if (typeof avatar !== 'undefined') updates.avatar = avatar;
 
   try {
-    if (updates.length === 0) return res.status(400).json({ error: 'No updates provided' });
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No updates provided' });
 
     // Unique checks
     if (username) {
-      const existing = prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, userId);
-      if (existing) return res.status(400).json({ error: 'Username already taken' });
+      const existing = await users.get('username', username);
+      if (existing && existing.id !== userId) return res.status(400).json({ error: 'Username already taken' });
     }
     if (email) {
-      const existing = prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email, userId);
-      if (existing) return res.status(400).json({ error: 'Email already in use' });
+      const existing = await users.get('email', email);
+      if (existing && existing.id !== userId) return res.status(400).json({ error: 'Email already in use' });
     }
 
-    for (const u of updates) {
-      prepare(`UPDATE users SET ${u.k}=? WHERE id=?`).run(u.v, userId);
-    }
-
-    const updated = prepare('SELECT id, username, email, avatar, is_admin as is_admin FROM users WHERE id = ?').get(userId);
-    res.json({ message: 'Profile updated successfully', user: updated });
+    await users.update(userId, updates);
+    const updated = await users.get('id', userId);
+    const { password, ...safeUser } = updated;
+    res.json({ message: 'Profile updated successfully', user: safeUser });
   } catch (err) {
     console.error('Error updating profile:', err);
     res.status(500).json({ error: 'Failed to update profile' });
@@ -126,10 +136,10 @@ router.put('/update-profile', authMiddleware, (req, res) => {
 });
 
 // Update avatar
-router.put('/update-avatar', authMiddleware, (req, res) => {
+router.put('/update-avatar', authMiddleware, async (req, res) => {
   const { avatar } = req.body;
   try {
-    prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar || null, req.user.id);
+    await prepare('users').update(req.user.id, { avatar: avatar || null });
     res.json({ message: 'Avatar updated successfully', avatar });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update avatar' });

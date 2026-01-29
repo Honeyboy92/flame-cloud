@@ -4,66 +4,80 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Compatibility for Supabase-style or filter
-// e.g. or=and(sender_id.eq.1,receiver_id.eq.2),and(sender_id.eq.2,receiver_id.eq.1)
+// Get chat messages (General or specific)
 router.get('/', authMiddleware, async (req, res) => {
-  const { or, order, dir } = req.query;
+  const { or, dir } = req.query;
   const userId = req.user.id;
 
   try {
-    let messages = [];
+    const chatRef = prepare('chat_messages');
+    let messages = await chatRef.all('created_at', dir === 'desc' ? 'desc' : 'asc');
+
     if (or) {
-      // Decode or if needed
       const decodedOr = decodeURIComponent(or);
       const idsmatch = decodedOr.match(/\.eq\.(\d+)/g);
 
-      console.log(`[ChatDebug] IDs found: ${JSON.stringify(idsmatch)}`);
-
-      if (idsmatch && idsmatch.length >= 2 && idsmatch[0] !== idsmatch[1]) {
+      if (idsmatch && idsmatch.length >= 2) {
         const otherId = idsmatch.find(m => m !== `.eq.${userId}`)?.replace('.eq.', '');
-        console.log(`[ChatDebug] Complex OR: identified otherId as ${otherId}`);
         if (otherId) {
-          const sql = `SELECT cm.*, su.avatar as sender_avatar, su.username as sender_username 
-                       FROM chat_messages cm 
-                       JOIN users su ON cm.sender_id = su.id 
-                       WHERE (cm.sender_id = ? AND cm.receiver_id = ?) 
-                          OR (cm.sender_id = ? AND cm.receiver_id = ?) 
-                       ORDER BY cm.created_at ${dir === 'desc' ? 'DESC' : 'ASC'}`;
-          messages = prepare(sql).all(userId, otherId, otherId, userId);
+          messages = messages.filter(m =>
+            (String(m.sender_id) === String(userId) && String(m.receiver_id) === String(otherId)) ||
+            (String(m.sender_id) === String(otherId) && String(m.receiver_id) === String(userId))
+          );
         }
       } else {
-        const sql = `SELECT cm.*, su.avatar as sender_avatar, su.username as sender_username 
-                     FROM chat_messages cm 
-                     JOIN users su ON cm.sender_id = su.id 
-                     WHERE cm.sender_id = ? OR cm.receiver_id = ? 
-                     ORDER BY cm.created_at ${dir === 'desc' ? 'DESC' : 'ASC'}`;
-        messages = prepare(sql).all(userId, userId);
+        messages = messages.filter(m => String(m.sender_id) === String(userId) || String(m.receiver_id) === String(userId));
       }
-    } else {
-      messages = prepare('SELECT * FROM chat_messages ORDER BY created_at ASC').all();
     }
 
-    // Map to frontend expectation
-    const mapped = messages.map(m => ({
-      ...m,
-      sender: { username: m.sender_username, avatar: m.sender_avatar }
+    // Enrich with user info
+    const usersRef = prepare('users');
+    const enriched = await Promise.all(messages.map(async (m) => {
+      const sender = await usersRef.get('id', m.sender_id);
+      return {
+        ...m,
+        sender: { username: sender?.username || 'Unknown', avatar: sender?.avatar || null }
+      };
     }));
 
-    res.json(mapped);
+    res.json(enriched);
   } catch (err) {
     console.error('Chat fetch error:', err);
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
-// Send message (mapped from chat_messages table)
-router.post('/', authMiddleware, (req, res) => {
+// Get messages for specific user (compatibility)
+router.get('/:otherUserId', authMiddleware, async (req, res) => {
+  const otherUserId = req.params.otherUserId;
+  const currentUserId = req.user.id;
+  try {
+    const chatRef = prepare('chat_messages');
+    const all = await chatRef.all('created_at', 'asc');
+    const filtered = all.filter(m =>
+      (String(m.sender_id) === String(currentUserId) && String(m.receiver_id) === String(otherUserId)) ||
+      (String(m.sender_id) === String(otherUserId) && String(m.receiver_id) === String(currentUserId))
+    );
+    res.json(filtered);
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Send message
+router.post('/', authMiddleware, async (req, res) => {
   const { sender_id, receiver_id, message } = req.body;
+  const sId = sender_id || req.user.id;
   if (!message || !receiver_id) return res.status(400).json({ error: 'Missing data' });
 
   try {
-    const result = prepare('INSERT INTO chat_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)')
-      .run(sender_id || req.user.id, receiver_id, message);
+    const result = await prepare('chat_messages').run({
+      sender_id: sId,
+      receiver_id,
+      message,
+      is_read: 0,
+      created_at: new Date().toISOString()
+    });
     res.json({ id: result.lastInsertRowid, message: 'Sent' });
   } catch (err) {
     res.status(500).json({ error: 'Send failed' });
@@ -71,16 +85,25 @@ router.post('/', authMiddleware, (req, res) => {
 });
 
 // Admin-specific users list
-router.get('/users-list', authMiddleware, (req, res) => {
+router.get('/users-list', authMiddleware, async (req, res) => {
   if (!req.user.isAdmin) return res.status(403).json({ error: 'Admin only' });
-  const users = prepare('SELECT id, username, avatar, last_seen FROM users WHERE is_admin = 0 ORDER BY last_seen DESC').all();
-  res.json(users);
+  try {
+    const users = await prepare('users').all('last_seen', 'desc');
+    res.json(users.filter(u => !u.is_admin));
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Support admin getter
-router.get('/admin', authMiddleware, (req, res) => {
-  const admin = prepare('SELECT id, username FROM users WHERE is_admin = 1 LIMIT 1').get();
-  res.json(admin);
+router.get('/admin', authMiddleware, async (req, res) => {
+  try {
+    const allUsers = await prepare('users').all();
+    const admin = allUsers.find(u => u.is_admin);
+    res.json(admin ? { id: admin.id, username: admin.username } : null);
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 module.exports = router;

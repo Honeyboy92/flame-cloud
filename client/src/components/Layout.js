@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAuth, supabase } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 const Layout = () => {
   const { user, logout, updateUser } = useAuth();
@@ -28,7 +29,7 @@ const Layout = () => {
       if (avatarPreview) updates.avatar = avatarPreview;
 
       if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
+        const { error } = await api
           .from('users')
           .update(updates)
           .eq('id', user.id);
@@ -36,7 +37,7 @@ const Layout = () => {
         if (error) throw error;
 
         // Refresh user context
-        const { data: fresh } = await supabase
+        const { data: fresh } = await api
           .from('users')
           .select('*')
           .eq('id', user.id)
@@ -204,13 +205,6 @@ const Layout = () => {
 
       {/* Floating Buttons Container - Right Side */}
       <div className="floating-buttons-right">
-        {/* Game Panel Button */}
-        <a href="https://panel.flamecloud.online/" target="_blank" rel="noopener noreferrer" className="float-btn game-panel-btn">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
-          </svg>
-          <span>Game Panel</span>
-        </a>
 
         {/* Client Chat Button (for users) / Users Button (for admin) */}
         {user?.isAdmin ? (
