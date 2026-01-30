@@ -6,7 +6,7 @@
             "destination": "/api/ping.js"
         },
         {
-            "source": "/api/(.*)",
+            "source": "/api/:path*",
             "destination": "/api/index.js"
         },
         {

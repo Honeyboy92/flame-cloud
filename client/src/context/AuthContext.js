@@ -6,8 +6,9 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Configure axios base URL
+// Configure axios base URL - always relative to current domain unless specified
 const API_BASE = process.env.REACT_APP_API_URL || '';
+axios.defaults.baseURL = API_BASE;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
