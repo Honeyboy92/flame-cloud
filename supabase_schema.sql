@@ -119,5 +119,5 @@ INSERT INTO paid_plans (name, ram, cpu, storage, location, price, sort_order) VA
 ('Diamond Plan', '16GB', '500%', '80 GB SSD', 'UAE', '1600 PKR', 5),
 ('Emerald Plan', '12GB', '350%', '50 GB SSD', 'UAE', '1200 PKR', 6),
 ('Ruby Plan', '32GB', '1000%', '100 GB SSD', 'UAE', '3200 PKR', 7),
-('Black Ruby Plan', '34GB', '2000%', '200 GB SSD', 'UAE', '3400 PKR', 8),
 ('Amethyst Plan', '36GB', '2500%', '250 GB SSD', 'UAE', '3600 PKR', 9);
+('Black Ruby Plan', '64GB', '2000%', '200 GB SSD', 'UAE', '3400 PKR', 8),
