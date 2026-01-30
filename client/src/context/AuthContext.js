@@ -6,8 +6,8 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Configure axios base URL - always relative to current domain unless specified
-const API_BASE = process.env.REACT_APP_API_URL || '';
+// Force strictly relative paths to prevent domain mismatch/CORS/405 issues on Vercel
+const API_BASE = '';
 axios.defaults.baseURL = API_BASE;
 
 export const AuthProvider = ({ children }) => {
