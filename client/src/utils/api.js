@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+// Force strictly relative paths to prevent domain mismatch/CORS/405 issues on Vercel
+const API_BASE = '';
 
 const createApiClient = () => {
     const query = (table, method = 'GET', data = null) => {
