@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
         try {
           // Set default authorization header
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`${API_BASE}/api/auth/me`);
+          const response = await axios.get(`/api/auth/me`);
           if (response.data) {
             setUser({
               ...response.data,
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
+      const response = await axios.post(`/api/auth/login`, { email, password });
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (username, email, password) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/auth/signup`, { username, email, password });
+      const response = await axios.post(`/api/auth/signup`, { username, email, password });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
