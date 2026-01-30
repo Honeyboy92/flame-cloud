@@ -50,6 +50,11 @@ registerRoutes(''); // Fallback for when /api is stripped by proxy/Vercel
 app.get('/api/health-check', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV, time: new Date().toISOString() }));
 
 // Error handling
+app.use((req, res) => {
+  console.log(`[404 Not Found] ${req.method} ${req.url}`);
+  res.status(404).json({ error: 'Route not found' });
+});
+
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
   res.status(500).json({ error: 'Internal server error' });
