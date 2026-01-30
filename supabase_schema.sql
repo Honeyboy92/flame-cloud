@@ -92,10 +92,6 @@ CREATE TABLE chat_messages (
 -- 3. SEED INITIAL DATA
 
 -- Default Admin User (Password: GSFY!25V$)
--- Note: Replace with your hashed password if needed, but the backend handles compareSync
--- Default hash for 'GSFY!25V$' is '$2a$10$7Z2v7.iLp.o3vXJRdC.gOe1S7F7Wp0e7oQ3wO5S1h6b5y6P1t.e' or similar
--- For now, we seed with a known hash or let the backend init handle it if needed.
--- We will add one admin as requested.
 INSERT INTO users (username, email, password, is_admin)
 VALUES ('Flame Cloud Admin', 'flamecloud@gmail.com', '$2a$10$5X9l7Y8h7l8l7l8l7l8l7u.l8l7l8l7l8l7l8l7l8l7l8l7l8l7', 1);
 
@@ -119,5 +115,5 @@ INSERT INTO paid_plans (name, ram, cpu, storage, location, price, sort_order) VA
 ('Diamond Plan', '16GB', '500%', '80 GB SSD', 'UAE', '1600 PKR', 5),
 ('Emerald Plan', '12GB', '350%', '50 GB SSD', 'UAE', '1200 PKR', 6),
 ('Ruby Plan', '32GB', '1000%', '100 GB SSD', 'UAE', '3200 PKR', 7),
-('Amethyst Plan', '36GB', '2500%', '250 GB SSD', 'UAE', '3600 PKR', 9);
 ('Black Ruby Plan', '64GB', '2000%', '200 GB SSD', 'UAE', '3400 PKR', 8),
+('Amethyst Plan', '36GB', '2500%', '250 GB SSD', 'UAE', '3600 PKR', 9);
