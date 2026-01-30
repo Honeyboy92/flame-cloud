@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+// Firebase removed, using Supabase now
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -59,7 +59,6 @@ if (require.main === module) {
   });
 }
 
-// Export as Firebase Cloud Function
-exports.api = functions.https.onRequest(app);
+// Export app for external use (e.g. Vercel)
 
 module.exports = app;
