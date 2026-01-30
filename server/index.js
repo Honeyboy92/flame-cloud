@@ -16,29 +16,35 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   if (req.url.startsWith('/api')) {
-    console.log(`[API Request] ${req.method} ${req.url}`);
+    // Debug log for API paths
   }
   next();
 });
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// API Routes
-app.use('/api/users', require('./routes/users'));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/plans', require('./routes/plans'));
-app.use('/api/tickets', require('./routes/tickets'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/about', require('./routes/about'));
-app.use('/api/chat_messages', require('./routes/chat'));
+// API Routes - Support both /api/ prefix and bare paths for compatibility
+const registerRoutes = (prefix = '') => {
+  app.use(`${prefix}/users`, require('./routes/users'));
+  app.use(`${prefix}/auth`, require('./routes/auth'));
+  app.use(`${prefix}/plans`, require('./routes/plans'));
+  app.use(`${prefix}/tickets`, require('./routes/tickets'));
+  app.use(`${prefix}/admin`, require('./routes/admin'));
+  app.use(`${prefix}/about`, require('./routes/about'));
+  app.use(`${prefix}/chat_messages`, require('./routes/chat'));
 
-// Consistent aliases
-app.use('/api/yt_partners', require('./routes/admin'));
-app.use('/api/location_settings', require('./routes/plans'));
-app.use('/api/paid_plans', require('./routes/plans'));
-app.use('/api/site_settings', require('./routes/plans'));
-app.use('/api/about_content', require('./routes/about'));
+  // Consistent aliases
+  app.use(`${prefix}/yt_partners`, require('./routes/admin'));
+  app.use(`${prefix}/location_settings`, require('./routes/plans'));
+  app.use(`${prefix}/paid_plans`, require('./routes/plans'));
+  app.use(`${prefix}/site_settings`, require('./routes/plans'));
+  app.use(`${prefix}/about_content`, require('./routes/about'));
+};
+
+registerRoutes('/api');
+registerRoutes(''); // Fallback for when /api is stripped by proxy/Vercel
 
 // Health check
 app.get('/api/health-check', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV, time: new Date().toISOString() }));

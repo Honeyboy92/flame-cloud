@@ -92,8 +92,18 @@ CREATE TABLE chat_messages (
 -- 3. SEED INITIAL DATA
 
 -- Default Admin User (Password: GSFY!25V$)
+-- Default Admin User (Password: GSFY!25V$)
 INSERT INTO users (username, email, password, is_admin)
-VALUES ('Flame Cloud Admin', 'flamecloud@gmail.com', '$2a$10$5X9l7Y8h7l8l7l8l7l8l7u.l8l7l8l7l8l7l8l7l8l7l8l7l8l7', 1);
+VALUES ('Flame Cloud Admin', 'flamecloud@gmail.com', '$2a$10$7Z2v7.iLp.o3vXJRdC.gOe1S7F7Wp0e7oQ3wO5S1h6b5y6P1t.e', 1);
+
+-- 4. DISABLE RLS (For easier initial setup)
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE location_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE paid_plans DISABLE ROW LEVEL SECURITY;
+ALTER TABLE yt_partners DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tickets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages DISABLE ROW LEVEL SECURITY;
 
 -- Site Settings
 INSERT INTO site_settings (key, value) VALUES 
