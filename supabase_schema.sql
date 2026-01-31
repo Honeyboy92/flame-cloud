@@ -56,6 +56,18 @@ CREATE TABLE paid_plans (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Free Plans Table
+CREATE TABLE free_plans (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    ram TEXT NOT NULL,
+    cpu TEXT NOT NULL,
+    storage TEXT NOT NULL,
+    location TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- YT Partners Table
 CREATE TABLE yt_partners (
     id SERIAL PRIMARY KEY,
@@ -92,7 +104,6 @@ CREATE TABLE chat_messages (
 -- 3. SEED INITIAL DATA
 
 -- Default Admin User (Password: GSFY!25V$)
--- Default Admin User (Password: GSFY!25V$)
 INSERT INTO users (username, email, password, is_admin)
 VALUES ('Flame Cloud Admin', 'flamecloud@gmail.com', '$2a$10$7Z2v7.iLp.o3vXJRdC.gOe1S7F7Wp0e7oQ3wO5S1h6b5y6P1t.e', 1);
 
@@ -101,6 +112,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE location_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE paid_plans DISABLE ROW LEVEL SECURITY;
+ALTER TABLE free_plans DISABLE ROW LEVEL SECURITY;
 ALTER TABLE yt_partners DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tickets DISABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages DISABLE ROW LEVEL SECURITY;
@@ -115,6 +127,10 @@ INSERT INTO location_settings (location, is_available, sort_order) VALUES
 ('UAE', 1, 1),
 ('France', 0, 2),
 ('Singapore', 0, 3);
+
+-- Free Plans
+INSERT INTO free_plans (name, ram, cpu, storage, location, sort_order) VALUES
+('Free Trial', '1GB', '50%', '5 GB SSD', 'UAE', 1);
 
 -- Paid Plans (UAE)
 INSERT INTO paid_plans (name, ram, cpu, storage, location, price, sort_order) VALUES
