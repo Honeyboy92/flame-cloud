@@ -22,7 +22,6 @@ const Dashboard = () => {
 
           <div className="hero-badges">
             <div className="hero-badge">
-              <span style={{ fontSize: '1.2rem', strokeWidth: '0' }}>🚀</span>
               <span style={{
                 background: 'linear-gradient(135deg, #ff6a00, #ff2e00, #ff6a00)',
                 backgroundSize: '200% 200%',
@@ -34,7 +33,6 @@ const Dashboard = () => {
               }}>Extreme NVMe</span>
             </div>
             <div className="hero-badge">
-              <span style={{ fontSize: '1.2rem', strokeWidth: '0' }}>🛡️</span>
               <span style={{
                 background: 'linear-gradient(135deg, #ff6a00, #ff2e00, #ff6a00)',
                 backgroundSize: '200% 200%',
@@ -46,7 +44,6 @@ const Dashboard = () => {
               }}>12Tbps DDoS Protection</span>
             </div>
             <div className="hero-badge">
-              <span style={{ fontSize: '1.2rem', strokeWidth: '0' }}>💎</span>
               <span style={{
                 background: 'linear-gradient(135deg, #ff6a00, #ff2e00, #ff6a00)',
                 backgroundSize: '200% 200%',
