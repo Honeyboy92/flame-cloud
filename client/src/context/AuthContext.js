@@ -1,14 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-
+import { supabase } from '../utils/supabase';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
-
-// Force strictly relative paths to prevent domain mismatch/CORS/405 issues on Vercel
-const API_BASE = '';
-axios.defaults.baseURL = API_BASE;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -17,61 +12,78 @@ export const AuthProvider = ({ children }) => {
   // Check for active session on load
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          // Set default authorization header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`/api/auth/me`);
-          if (response.data) {
-            setUser({
-              ...response.data,
-              isAdmin: !!response.data.isAdmin
-            });
-          }
-        } catch (error) {
-          console.error('Session initialization error:', error);
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
-        }
+      // Get initial session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        // Fetch user profile info from public.users table if needed, 
+        // or just use metadata. Here we assume metadata is enough for isAdmin.
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          username: session.user.user_metadata?.username || session.user.email.split('@')[0],
+          isAdmin: !!session.user.user_metadata?.is_admin
+        });
       }
+
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.user_metadata?.username || session.user.email.split('@')[0],
+            isAdmin: !!session.user.user_metadata?.is_admin
+          });
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+
       setLoading(false);
+      return () => subscription.unsubscribe();
     };
 
     initAuth();
   }, []);
 
   const login = async (email, password) => {
-    try {
-      const response = await axios.post(`/api/auth/login`, { email, password });
-      const { token, user: userData } = response.data;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    if (error) throw error;
 
-      const userWithFlag = {
-        ...userData,
-        isAdmin: !!userData.isAdmin
-      };
-      setUser(userWithFlag);
-      return userWithFlag;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
+    const userData = {
+      id: data.user.id,
+      email: data.user.email,
+      username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+      isAdmin: !!data.user.user_metadata?.is_admin
+    };
+    setUser(userData);
+    return userData;
   };
 
   const signup = async (username, email, password) => {
-    try {
-      const response = await axios.post(`/api/auth/signup`, { username, email, password });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username: username,
+          is_admin: 0
+        }
+      }
+    });
+
+    if (error) throw error;
+    return data;
   };
 
   const logout = async () => {
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    await supabase.auth.signOut();
     setUser(null);
   };
 
