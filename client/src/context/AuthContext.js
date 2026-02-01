@@ -72,8 +72,7 @@ export const AuthProvider = ({ children }) => {
       password,
       options: {
         data: {
-          username: username,
-          is_admin: 0
+          username: username
         }
       }
     });
