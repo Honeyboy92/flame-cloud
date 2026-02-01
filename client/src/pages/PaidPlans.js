@@ -39,7 +39,7 @@ const PaidPlans = () => {
         const { data, error } = await api
           .from('paid_plans')
           .select('*')
-          .eq('is_active', true)
+          .eq('is_active', 1)
           .order('sort_order', { ascending: true });
 
         if (error) throw error;

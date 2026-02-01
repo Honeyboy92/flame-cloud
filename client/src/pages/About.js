@@ -429,7 +429,13 @@ const About = () => {
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}>
-                      <div className="about-icon-box">{feature.icon}</div>
+                      <div className="about-icon-box" style={{
+                        fontSize: '1.8rem',
+                        color: 'transparent',
+                        WebkitTextStroke: '1px #FF2E00',
+                        textShadow: 'none',
+                        lineHeight: 1
+                      }}>{feature.icon}</div>
                       <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>
                         {feature.text}
                       </span>
