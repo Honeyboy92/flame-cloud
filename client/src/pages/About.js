@@ -404,14 +404,93 @@ const About = () => {
               <div style={{ marginTop: '20px' }}>
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {[
-                    { icon: '🔥', text: 'Ultra-Fast NVMe SSD Servers' },
-                    { icon: '☄️', text: 'Global Server Locations' },
-                    { icon: '📛', text: 'DDoS Protection' },
-                    { icon: '🛠️', text: 'Full Control Panel Access' },
-                    { icon: '⚡', text: 'Optimized Gaming Hardware' },
-                    { icon: '🧨', text: 'One-Click Mod Installations' },
-                    { icon: '☀️', text: '99.9% Uptime Guarantee' },
-                    { icon: '🏮', text: '24/7 Premium Support' }
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                      ),
+                      text: 'Ultra-Fast NVMe SSD Servers'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                          <circle cx="12" cy="12" r="2" fill="#FF2E00" />
+                          <circle cx="6" cy="8" r="1" fill="#FF2E00" />
+                          <circle cx="18" cy="16" r="1" fill="#FF2E00" />
+                        </svg>
+                      ),
+                      text: 'Global Server Locations'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          <rect x="9" y="9" width="6" height="7" rx="1" />
+                          <circle cx="12" cy="11" r="1" fill="#FF2E00" />
+                          <line x1="12" y1="12" x2="12" y2="14" />
+                        </svg>
+                      ),
+                      text: 'DDoS Protection'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                      ),
+                      text: 'Full Control Panel Access'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="6" y="11" width="12" height="6" rx="2" />
+                          <path d="M8 11V9a4 4 0 0 1 8 0v2" />
+                          <circle cx="9" cy="14" r="1" fill="#FF2E00" />
+                          <circle cx="15" cy="14" r="1" fill="#FF2E00" />
+                          <path d="M4 8l2-2m14 0l-2-2M6 18l-2 2m14 0l2-2" />
+                        </svg>
+                      ),
+                      text: 'Optimized Gaming Hardware'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                          <polyline points="10 17 15 12 10 7" />
+                          <line x1="15" y1="12" x2="3" y2="12" />
+                          <circle cx="7" cy="6" r="2" />
+                          <line x1="7" y1="6" x2="7" y2="3" />
+                        </svg>
+                      ),
+                      text: 'One-Click Mod Installations'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                          <path d="M20 6l2 2-2 2" />
+                          <circle cx="20" cy="8" r="4" strokeWidth="1" />
+                          <polyline points="19 7 20 8 22 6" />
+                        </svg>
+                      ),
+                      text: '99.9% Uptime Guarantee'
+                    },
+                    {
+                      icon: (
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2E00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                          <circle cx="12" cy="5" r="2" />
+                          <path d="M10 5h4" />
+                        </svg>
+                      ),
+                      text: '24/7 Premium Support'
+                    }
                   ].map((feature, idx) => (
                     <div key={idx} style={{
                       display: 'flex',
@@ -430,11 +509,15 @@ const About = () => {
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}>
                       <div className="about-icon-box" style={{
-                        fontSize: '1.8rem',
-                        color: 'transparent',
-                        WebkitTextStroke: '1px #FF2E00',
-                        textShadow: 'none',
-                        lineHeight: 1
+                        width: '36px',
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'transparent',
+                        border: '2px solid #FF2E00',
+                        borderRadius: '10px',
+                        boxShadow: '0 0 12px rgba(255, 46, 0, 0.3)'
                       }}>{feature.icon}</div>
                       <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>
                         {feature.text}
