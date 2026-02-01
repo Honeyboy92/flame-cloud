@@ -1937,6 +1937,9 @@ tr:hover {
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
+  background: transparent;
+  border: 2px solid #FF2E00;
+  box-shadow: 0 0 15px rgba(255, 46, 0, 0.4);
 }
 
 .stat-icon-box svg {
@@ -5427,8 +5430,8 @@ button:active {
 .stat-icon-box {
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #FF2E00, #FFD000);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  border: 2px solid #FF2E00;
   border-radius: 12px;
   display: flex;
   justify-content: center;
@@ -5436,7 +5439,7 @@ button:active {
   color: #fff;
   font-size: 1.2rem;
   margin: 0 auto 15px auto;
-  box-shadow: 0 0 20px rgba(255, 46, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 46, 0, 0.4);
 }
 
 .stat-num {
