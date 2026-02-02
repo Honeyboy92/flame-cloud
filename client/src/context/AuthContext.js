@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
           id: profile.id,
           email: profile.email,
           username: profile.username,
-          isAdmin: profile.is_admin === 1,
+          isAdmin: profile.is_admin == 1 || profile.is_admin === true,
           avatar: profile.avatar
         });
       }
