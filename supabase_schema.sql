@@ -17,7 +17,7 @@ CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
+    password TEXT, -- Optional since we use Supabase Auth
     avatar TEXT,
     is_admin INTEGER DEFAULT 0,
     has_claimed_free_plan INTEGER DEFAULT 0,
