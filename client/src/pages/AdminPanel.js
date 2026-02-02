@@ -214,9 +214,28 @@ const AdminPanel = () => {
   const handleDeleteUser = async (id) => {
     if (!confirm('Delete this user? (Only removes from database, not Auth system)')) return;
     try {
-      const { data, error } = await api
+      const { error } = await api
         .from('users').delete().eq('id', id);
       if (!error) loadData();
+    } catch (e) { console.error(e); }
+  };
+
+  const handleToggleAdmin = async (u) => {
+    const newStatus = u.is_admin === 1 ? 0 : 1;
+    if (!confirm(`Are you sure you want to ${newStatus === 1 ? 'promote' : 'demote'} ${u.username || u.email} ${newStatus === 1 ? 'to' : 'from'} Admin?`)) return;
+
+    try {
+      const { error } = await api
+        .from('users')
+        .update({ is_admin: newStatus })
+        .eq('id', u.id);
+
+      if (!error) {
+        loadData();
+        alert(`User ${newStatus === 1 ? 'promoted to' : 'demoted from'} Admin successfully!`);
+      } else {
+        alert('Failed to update admin status: ' + error.message);
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -410,19 +429,37 @@ const AdminPanel = () => {
 
       {activeTab === 'users' && (
         <div className="card">
-          <h3>👥 Users</h3>
+          <h3>👥 Users Management</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+            Note: "Make Admin" updates the profile. For full Auth metadata sync, user should logout and login after promotion.
+          </p>
           <div style={{ marginTop: 12 }}>
             {users.length === 0 ? (
               <p style={{ color: 'var(--text-muted)' }}>No users found</p>
             ) : (
               users.map(u => (
-                <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, marginBottom: 10 }}>
+                <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', border: '1px solid rgba(255,106,0,0.1)', background: 'rgba(255,106,0,0.03)', borderRadius: 8, marginBottom: 10, alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontWeight: 600 }}>{u.email}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{u.username} • {u.is_admin ? 'Admin' : 'User'}</div>
+                    <div style={{ fontWeight: 600, color: '#fff' }}>{u.email}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      {u.username} • <span style={{ color: u.is_admin ? 'var(--primary)' : 'inherit', fontWeight: u.is_admin ? 'bold' : 'normal' }}>{u.is_admin ? 'ADMIN' : 'Standard User'}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-danger" onClick={() => handleDeleteUser(u.id)}>Delete DB Entry</button>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      className={`btn ${u.is_admin ? 'btn-secondary' : 'btn-success'}`}
+                      onClick={() => handleToggleAdmin(u)}
+                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                    >
+                      {u.is_admin ? 'Remove Admin' : 'Make Admin'}
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDeleteUser(u.id)}
+                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))

@@ -12,41 +12,72 @@ export const AuthProvider = ({ children }) => {
   // Check for active session on load
   useEffect(() => {
     const initAuth = async () => {
-      // Get initial session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        // Fetch user profile info from public.users table if needed, 
-        // or just use metadata. Here we assume metadata is enough for isAdmin.
-        setUser({
-          id: session.user.id,
-          email: session.user.email,
-          username: session.user.user_metadata?.username || session.user.email.split('@')[0],
-          isAdmin: !!session.user.user_metadata?.is_admin
-        });
+        await syncAndSetUser(session.user);
+      } else {
+        setLoading(false);
       }
 
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email,
-            username: session.user.user_metadata?.username || session.user.email.split('@')[0],
-            isAdmin: !!session.user.user_metadata?.is_admin
-          });
+          await syncAndSetUser(session.user);
         } else {
           setUser(null);
+          setLoading(false);
         }
-        setLoading(false);
       });
 
-      setLoading(false);
       return () => subscription.unsubscribe();
     };
 
     initAuth();
   }, []);
+
+  const syncAndSetUser = async (supabaseUser) => {
+    try {
+      // 1. Try to fetch from public.users table
+      let { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      // 2. If not found, create it (Auto-sync)
+      if (error && error.code === 'PGRST116') {
+        const newProfile = {
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          username: supabaseUser.user_metadata?.username || supabaseUser.email.split('@')[0],
+          is_admin: 0 // Default for new signups
+        };
+
+        const { data: created, error: createError } = await supabase
+          .from('users')
+          .insert([newProfile])
+          .select()
+          .single();
+
+        if (!createError) profile = created;
+      }
+
+      if (profile) {
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          username: profile.username,
+          isAdmin: profile.is_admin === 1,
+          avatar: profile.avatar
+        });
+      }
+    } catch (err) {
+      console.error('Auth sync error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -56,14 +87,9 @@ export const AuthProvider = ({ children }) => {
 
     if (error) throw error;
 
-    const userData = {
-      id: data.user.id,
-      email: data.user.email,
-      username: data.user.user_metadata?.username || data.user.email.split('@')[0],
-      isAdmin: !!data.user.user_metadata?.is_admin
-    };
-    setUser(userData);
-    return userData;
+    // syncAndSetUser will be triggered by onAuthStateChange, but we can call it here for faster feedback
+    await syncAndSetUser(data.user);
+    return data.user;
   };
 
   const signup = async (username, email, password) => {
