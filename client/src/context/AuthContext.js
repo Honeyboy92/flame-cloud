@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
       if (profile) {
         // Hardcoded check for main admin email
-        const isMainAdmin = profile.email === 'flamecloud@gmail.com';
+        const isMainAdmin = profile.email?.toLowerCase() === 'flamecloud@gmail.com';
 
         setUser({
           id: profile.id,

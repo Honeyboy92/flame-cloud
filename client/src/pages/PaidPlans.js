@@ -46,10 +46,38 @@ const PaidPlans = () => {
 
         // Sort plans logically: first by sort_order, then by RAM/price
         const sortedPlans = (data || []).sort((a, b) => {
-          if (a.sort_order !== b.sort_order) {
-            return (a.sort_order || 0) - (b.sort_order || 0);
+          // If both have sort_order, use it
+          if (a.sort_order !== undefined && b.sort_order !== undefined && a.sort_order !== b.sort_order) {
+            return a.sort_order - b.sort_order;
           }
-          // Fallback to RAM-based sorting if sort_order is same
+
+          // Fallback: Priority by common plan names
+          const namePriority = {
+            'bronze': 1,
+            'silver': 2,
+            'gold': 3,
+            'platinum': 4,
+            'diamond': 5,
+            'emerald': 6,
+            'amethyst': 7,
+            'ruby': 8,
+            'black ruby': 9
+          };
+
+          const getNamePriority = (name) => {
+            const lower = name.toLowerCase();
+            for (const key in namePriority) {
+              if (lower.includes(key)) return namePriority[key];
+            }
+            return 99;
+          };
+
+          const prioA = getNamePriority(a.name);
+          const priob = getNamePriority(b.name);
+
+          if (prioA !== priob) return prioA - priob;
+
+          // Fallback to RAM-based sorting
           const getRamValue = (ramStr) => {
             const val = parseInt(ramStr);
             return isNaN(val) ? 0 : val;
