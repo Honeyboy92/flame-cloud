@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Professional Minecraft Hosting Platform by Honey_boy1",
   "scripts": {
-    "start": "cd client && npm start",
-    "dev": "cd client && npm start",
-    "install-all": "npm install && cd client && npm install",
-    "build": "cd client && npm install && npm run build",
-    "vercel-build": "cd client && npm install && npm run build"
+    "start": "npm start --prefix client",
+    "dev": "npm start --prefix client",
+    "install-all": "npm install && npm install --prefix client",
+    "build": "npm install --prefix client && npm run build --prefix client",
+    "vercel-build": "npm install --prefix client && npm run build --prefix client"
   },
   "engines": {
     "node": ">=18.0.0"
