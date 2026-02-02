@@ -43,7 +43,21 @@ const PaidPlans = () => {
           .order('sort_order', { ascending: true });
 
         if (error) throw error;
-        setPlans(data || []);
+
+        // Sort plans logically: first by sort_order, then by RAM/price
+        const sortedPlans = (data || []).sort((a, b) => {
+          if (a.sort_order !== b.sort_order) {
+            return (a.sort_order || 0) - (b.sort_order || 0);
+          }
+          // Fallback to RAM-based sorting if sort_order is same
+          const getRamValue = (ramStr) => {
+            const val = parseInt(ramStr);
+            return isNaN(val) ? 0 : val;
+          };
+          return getRamValue(a.ram) - getRamValue(b.ram);
+        });
+
+        setPlans(sortedPlans);
       } catch (err) {
         console.error('Failed to load plans', err);
       }

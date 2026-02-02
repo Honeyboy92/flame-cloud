@@ -64,11 +64,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (profile) {
+        // Hardcoded check for main admin email
+        const isMainAdmin = profile.email === 'flamecloud@gmail.com';
+
         setUser({
           id: profile.id,
           email: profile.email,
           username: profile.username,
-          isAdmin: profile.is_admin == 1 || profile.is_admin === true,
+          isAdmin: isMainAdmin || profile.is_admin == 1 || profile.is_admin === true,
           avatar: profile.avatar
         });
       }
