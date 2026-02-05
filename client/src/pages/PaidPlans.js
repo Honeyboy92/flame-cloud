@@ -57,9 +57,9 @@ const PaidPlans = () => {
             'silver': 2,
             'gold': 3,
             'platinum': 4,
-            'diamond': 5,
-            'emerald': 6,
-            'amethyst': 7,
+            'amethyst': 5,
+            'diamond': 6,
+            'emerald': 7,
             'ruby': 8,
             'black ruby': 9
           };
