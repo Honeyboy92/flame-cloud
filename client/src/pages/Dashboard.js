@@ -156,51 +156,7 @@ const Dashboard = () => {
         </a>
       </div>
 
-      {/* Why Choose Us */}
-      <div className="card">
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/logo.png" alt="" style={{ width: '28px', height: '28px' }} />
-          Why Choose Flame Cloud?
-        </h3>
-        <div className="features-mini-grid">
-          <div className="feature-mini">
-            <span className="feature-mini-icon" style={{ background: 'transparent', border: '2px solid #FF2E00', fontSize: '1.4rem' }}>
-              🚀
-            </span>
-            <div>
-              <h5>NVMe Gen4</h5>
-              <p>7,000MB/s Read Speeds</p>
-            </div>
-          </div>
-          <div className="feature-mini">
-            <span className="feature-mini-icon" style={{ background: 'transparent', border: '2px solid #FF2E00', fontSize: '1.4rem' }}>
-              🛡️
-            </span>
-            <div>
-              <h5>DDoS Shield</h5>
-              <p>12Tbps+ Capacity</p>
-            </div>
-          </div>
-          <div className="feature-mini">
-            <span className="feature-mini-icon" style={{ background: 'transparent', border: '2px solid #FF2E00', fontSize: '1.4rem' }}>
-              💎
-            </span>
-            <div>
-              <h5>Ryzen 9 Power</h5>
-              <p>Maximum Single-Thread</p>
-            </div>
-          </div>
-          <div className="feature-mini">
-            <span className="feature-mini-icon" style={{ background: 'transparent', border: '2px solid #FF2E00', fontSize: '1.4rem' }}>
-              🧩
-            </span>
-            <div>
-              <h5>Flame Panel</h5>
-              <p>Custom Experience</p>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };
