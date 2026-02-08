@@ -23,7 +23,7 @@ const YTPartners = () => {
         id: p.id,
         name: p.name,
         logo: p.logo,
-        channel_url: p.channel_link || '#',
+        channel_url: p.channel_url || p.channel_link || '#',
         description: p.description || '',
         isFeatured: p.is_featured || false
       }));
