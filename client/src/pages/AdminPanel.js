@@ -70,13 +70,16 @@ const AdminPanel = () => {
 
   const handleLocationToggle = async (location) => {
     try {
-      const { error } = await api
+      const { error } = await supabase
         .from('location_settings')
-        .update({ is_available: !location.is_available }) // Ensure column match DB
+        .update({ is_available: location.is_available ? 0 : 1 }) // Toggle 1/0
         .eq('id', location.id);
 
       if (!error) {
         loadData();
+      } else {
+        console.error('Error updating location:', error);
+        alert('Failed to update location: ' + error.message);
       }
     } catch (err) {
       console.error('Error updating location:', err);
