@@ -1,0 +1,110 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║         ⚡ GIT INSTALL KARO - 5 MINUTES ⚡                       ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│  🎯 GIT INSTALL KARNE KA SABSE AASAN TARIKA                      │
+└──────────────────────────────────────────────────────────────────┘
+
+
+STEP 1: DOWNLOAD GIT
+  
+  1. Is link pe jao:
+     https://git-scm.com/download/win
+  
+  2. "64-bit Git for Windows Setup" download karo
+     (Automatic download start ho jayega)
+  
+  3. File download hone ka wait karo (2-3 minutes)
+
+
+STEP 2: INSTALL GIT
+  
+  1. Downloaded file pe double-click karo
+     (Git-2.xx.x-64-bit.exe)
+  
+  2. Installation wizard khulega
+  
+  3. Sab screens me "Next" click karte jao
+     (Kuch bhi change mat karo, default settings theek hain)
+  
+  4. Last screen me "Install" click karo
+  
+  5. Installation complete hone ka wait karo (1-2 minutes)
+  
+  6. "Finish" click karo
+
+
+STEP 3: VERIFY INSTALLATION
+  
+  1. Command Prompt kholo (naya window)
+     - Windows Key + R
+     - Type: cmd
+     - Press Enter
+  
+  2. Type karo:
+     git --version
+  
+  3. Agar version dikha (e.g., "git version 2.43.0")
+     ✅ Git successfully install ho gaya!
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│  🚀 GIT INSTALL HONE KE BAAD                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+Ab ye commands run karo:
+
+cd "C:\Users\raomu\Documents\Flame Cloud"
+git init
+ren gitignore .gitignore
+git add .
+git commit -m "Flame Cloud - Ready for deployment"
+
+
+Phir GitHub repository banao aur push karo!
+
+Read: PUSH-TO-GITHUB.md (complete guide)
+Or: 📦-GITHUB-PUSH-STEPS.txt (visual guide)
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│  ⏱️ TIME REQUIRED                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+Download:     2-3 minutes
+Install:      1-2 minutes
+Verify:       30 seconds
+─────────────────────────────
+TOTAL:        ~5 minutes
+
+
+┌──────────────────────────────────────────────────────────────────┐
+│  📞 PROBLEM?                                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+Problem: Download nahi ho raha
+Solution: Direct link use karo:
+  https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe
+
+Problem: "git --version" kaam nahi kar raha
+Solution: Command Prompt restart karo (close karke phir se kholo)
+
+Problem: Installation fail ho raha
+Solution: 
+  1. Antivirus temporarily disable karo
+  2. Administrator ke taur pe install karo (right-click → Run as administrator)
+
+
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║              ⚡ GIT INSTALL KARO PEHLE! ⚡                       ║
+║                                                                  ║
+║         Download: https://git-scm.com/download/win               ║
+║         Time: 5 minutes                                          ║
+║         Then: Follow PUSH-TO-GITHUB.md                           ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
