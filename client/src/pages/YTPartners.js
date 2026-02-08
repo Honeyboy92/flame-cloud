@@ -14,7 +14,7 @@ const YTPartners = () => {
       const { data, error } = await api
         .from('yt_partners')
         .select('*')
-        .eq('is_active', true)
+        // .eq('is_active', 1)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
