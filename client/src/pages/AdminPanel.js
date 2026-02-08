@@ -200,22 +200,31 @@ const AdminPanel = () => {
     try {
       const payload = {
         name: partnerForm.name,
-        channel_link: partnerForm.link,
+        channel_url: partnerForm.link, // DB column is channel_url
         logo: partnerForm.logo,
-        is_featured: partnerForm.isFeatured,
-        is_active: true
+        is_featured: partnerForm.isFeatured ? 1 : 0, // DB uses 0/1
+        is_active: 1
       };
 
+      let error;
       if (editingPartner !== null) {
-        await supabase.from('yt_partners').update(payload).eq('id', editingPartner);
+        const { error: updateError } = await supabase.from('yt_partners').update(payload).eq('id', editingPartner);
+        error = updateError;
       } else {
-        await supabase.from('yt_partners').insert([payload]);
+        const { error: insertError } = await supabase.from('yt_partners').insert([payload]);
+        error = insertError;
       }
 
-      setEditingPartner(null);
-      setPartnerForm({ name: '', link: '', logo: '', isFeatured: false });
-      setShowPartnerModal(false);
-      loadData();
+      if (!error) {
+        setEditingPartner(null);
+        setPartnerForm({ name: '', link: '', logo: '', isFeatured: false });
+        setShowPartnerModal(false);
+        loadData();
+        alert('Partner saved successfully!');
+      } else {
+        console.error('Error saving partner:', error);
+        alert('Failed to save partner: ' + error.message);
+      }
     } catch (e) { console.error(e); }
   };
 
