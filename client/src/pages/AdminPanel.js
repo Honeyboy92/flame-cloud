@@ -91,9 +91,13 @@ const AdminPanel = () => {
   const handleSavePlan = async () => {
     try {
       setIsSaving(true);
+
+      // Sanitize payload: remove ID and created_at
+      const { id, created_at, updated_at, ...updates } = formData;
+
       const { error } = await api
         .from('paid_plans')
-        .update(formData)
+        .update(updates)
         .eq('id', editingPlan);
 
       if (!error) {
