@@ -12,6 +12,7 @@ const AdminPanel = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPlan, setEditingPlan] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({});
 
   // additional state
@@ -89,6 +90,7 @@ const AdminPanel = () => {
 
   const handleSavePlan = async () => {
     try {
+      setIsSaving(true);
       const { error } = await api
         .from('paid_plans')
         .update(formData)
@@ -97,9 +99,16 @@ const AdminPanel = () => {
       if (!error) {
         setEditingPlan(null);
         loadData();
+        alert('Plan updated successfully!');
+      } else {
+        alert('Failed to update plan: ' + error.message);
+        console.error('Error saving plan:', error);
       }
     } catch (err) {
       console.error('Error saving plan:', err);
+      alert('An unexpected error occurred while saving.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -507,8 +516,10 @@ const AdminPanel = () => {
               <input type="number" value={formData.discount || 0} onChange={e => setFormData({ ...formData, discount: Number(e.target.value) })} />
             </div>
             <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setEditingPlan(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSavePlan}>Save Changes</button>
+              <button className="btn btn-secondary" onClick={() => setEditingPlan(null)} disabled={isSaving}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSavePlan} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
         </div>
