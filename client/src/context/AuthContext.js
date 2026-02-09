@@ -12,11 +12,28 @@ export const AuthProvider = ({ children }) => {
   // Check for active session on load
   useEffect(() => {
     const initAuth = async () => {
+      // 1. Try to load from localStorage cache first for instant render
+      const cachedUser = localStorage.getItem('flame_user_cache');
+      if (cachedUser) {
+        try {
+          setUser(JSON.parse(cachedUser));
+          setLoading(false); // Immediate unlock
+        } catch (e) {
+          console.error('Cache parse error', e);
+        }
+      }
+
+      // 2. Verify with Supabase in background
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
         await syncAndSetUser(session.user);
       } else {
+        // If query confirms no user, but we had cache, clear it
+        if (!session?.user) {
+          setUser(null);
+          localStorage.removeItem('flame_user_cache');
+        }
         setLoading(false);
       }
 
@@ -26,6 +43,7 @@ export const AuthProvider = ({ children }) => {
           await syncAndSetUser(session.user);
         } else {
           setUser(null);
+          localStorage.removeItem('flame_user_cache');
           setLoading(false);
         }
       });
@@ -100,13 +118,16 @@ export const AuthProvider = ({ children }) => {
         // Hardcoded check for main admin email as extra safety
         const isMainAdmin = profile.email?.toLowerCase() === 'flamecloud@gmail.com';
 
-        setUser({
+        const userData = {
           id: profile.id,
           email: profile.email,
           username: profile.username,
           isAdmin: isMainAdmin || profile.is_admin == 1 || profile.is_admin === true,
           avatar: profile.avatar
-        });
+        };
+
+        setUser(userData);
+        localStorage.setItem('flame_user_cache', JSON.stringify(userData));
       }
     } catch (err) {
       console.error('Auth sync error:', err);
@@ -146,6 +167,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    localStorage.removeItem('flame_user_cache');
   };
 
   const updateUser = (updates) => {
