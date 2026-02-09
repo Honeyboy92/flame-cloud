@@ -242,7 +242,7 @@ const PaidPlans = () => {
   };
 
   return (
-    <div style={{ zoom: '80%' }}>
+    <div style={{ transform: 'scale(0.8)', transformOrigin: 'top center', width: '125%', margin: '0 auto', maxWidth: '1600px' }}>
       <div className="page-header">
         <h2>💰 Premium Server Plans</h2>
         <p>Select a location to view available plans</p>
