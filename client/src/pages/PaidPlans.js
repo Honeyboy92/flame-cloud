@@ -242,7 +242,7 @@ const PaidPlans = () => {
   };
 
   return (
-    <div style={{ transform: 'scale(0.8)', transformOrigin: 'top center', width: '125%', marginLeft: '-12.5%', marginBottom: '-20%' }}>
+    <div className="paid-plans-page">
       <div className="page-header">
         <h2>💰 Premium Server Plans</h2>
         <p>Select a location to view available plans</p>

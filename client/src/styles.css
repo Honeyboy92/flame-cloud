@@ -718,14 +718,15 @@ body::after {
 }
 
 .plan-card {
-  background: linear-gradient(165deg, rgba(20, 12, 8, 0.95), rgba(35, 20, 12, 0.85));
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 106, 0, 0.25);
-  border-radius: 24px;
-  padding: 36px;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(165deg, rgba(20, 12, 8, 0.95), rgba(35, 20, 12, 0.9));
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 106, 0, 0.3);
+  border-radius: 20px;
+  padding: 30px;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .plan-card::before {
