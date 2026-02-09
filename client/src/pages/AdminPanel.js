@@ -439,11 +439,11 @@ const AdminPanel = () => {
                     <img src={p.logo} alt={p.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
                     <div>
                       <div style={{ fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{p.channel_link}</div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{p.channel_url}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-secondary" onClick={() => { setEditingPartner(p.id); setPartnerForm({ name: p.name, link: p.channel_link, logo: p.logo, isFeatured: !!p.is_featured }); setShowPartnerModal(true); }}>Edit</button>
+                    <button className="btn btn-secondary" onClick={() => { setEditingPartner(p.id); setPartnerForm({ name: p.name, link: p.channel_url, logo: p.logo, isFeatured: !!p.is_featured }); setShowPartnerModal(true); }}>Edit</button>
                     <button className="btn btn-danger" onClick={() => handleDeletePartner(p.id)}>Delete</button>
                   </div>
                 </div>
