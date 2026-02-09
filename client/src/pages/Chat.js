@@ -123,10 +123,10 @@ const Chat = () => {
 
   const getAdminId = async () => {
     try {
-      const { data } = await supabase
+      const { data } = await api
         .from('users')
         .select('id')
-        .eq('is_admin', true)
+        .eq('is_admin', 1)
         .limit(1)
         .single();
 
