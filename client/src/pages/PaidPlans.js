@@ -242,7 +242,7 @@ const PaidPlans = () => {
   };
 
   return (
-    <div style={{ transform: 'scale(0.8)', transformOrigin: 'top center', width: '125%', margin: '0 auto', maxWidth: '1600px' }}>
+    <div style={{ transform: 'scale(0.8)', transformOrigin: 'top center', width: '125%', marginLeft: '-12.5%', marginBottom: '-20%' }}>
       <div className="page-header">
         <h2>💰 Premium Server Plans</h2>
         <p>Select a location to view available plans</p>
@@ -461,7 +461,7 @@ const PaidPlans = () => {
           {/* Why Choose Section */}
           <div className="card" style={{ marginBottom: '40px', position: 'relative', zIndex: 1 }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><img src="/logo.png" alt="" style={{ width: '28px', height: '28px' }} /> Why Choose Flame Cloud?</h3>
-            <div className="features-mini-grid">
+            <div className="features-mini-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               <div className="feature-mini">
                 <span className="feature-mini-icon" style={{ background: 'transparent', border: '2px solid #FF2E00' }}>
                   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF2E00" strokeWidth="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
