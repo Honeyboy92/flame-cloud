@@ -13,7 +13,7 @@ const YTPartners = () => {
     try {
       const { data, error } = await api
         .from('yt_partners')
-        .select('*')
+        .select('id, name, logo, channel_url, channel_link, description, is_featured, sort_order')
         // .eq('is_active', 1)
         .order('sort_order', { ascending: true });
 
