@@ -242,7 +242,7 @@ const PaidPlans = () => {
   };
 
   return (
-    <div>
+    <div style={{ zoom: '80%' }}>
       <div className="page-header">
         <h2>💰 Premium Server Plans</h2>
         <p>Select a location to view available plans</p>
